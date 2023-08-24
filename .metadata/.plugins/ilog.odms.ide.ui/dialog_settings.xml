@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<section name="Workbench">
+	<section name="OplSearchPage">
+		<item key="CASE_SENSITIVE" value="false"/>
+		<item key="HISTORY_SIZE" value="0"/>
+	</section>
+</section>

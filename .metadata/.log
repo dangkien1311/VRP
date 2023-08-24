@@ -13,3 +13,36 @@ Command-line arguments:  -os win32 -ws win32 -arch x86_64 -clean
 
 !ENTRY ilog.odms.ide.opllang 1 0 2023-07-23 11:28:43.141
 !MESSAGE concert_wrap.IloEndMT
+!SESSION 2023-08-12 15:45:29.015 -----------------------------------------------
+eclipse.buildId=Build R0
+java.fullversion=11.0.13+8
+JRE 11 Windows 10 amd64-64-Bit Compressed References 20211022_218 (JIT enabled, AOT enabled)
+OpenJ9   - e1e72c497
+OMR      - 299b6a2d2
+JCL      - 2d83aa3b76 based on jdk-11.0.13+8
+BootLoader constants: OS=win32, ARCH=x86_64, WS=win32, NL=en_US
+Command-line arguments:  -os win32 -ws win32 -arch x86_64 -clean
+
+!ENTRY org.eclipse.ui 2 2 2023-08-12 15:46:50.971
+!MESSAGE Invalid preference category path: org.eclipse.wst.html.ui.preferences.web (bundle: org.eclipse.wst.jsdt.ui, page: org.eclipse.wst.jsdt.ui.preferences.JavaBasePreferencePage)
+
+!ENTRY org.eclipse.ui 4 4 2023-08-12 15:50:52.546
+!MESSAGE Plug-in 'org.eclipse.team.ui' contributed an invalid Menu Extension (Path: 'project' is invalid): org.eclipse.team.ui.ConfigureProject
+
+!ENTRY org.eclipse.ui 4 4 2023-08-12 15:50:52.547
+!MESSAGE Plug-in 'org.eclipse.team.ui' contributed an invalid Menu Extension (Path: 'project' is invalid): org.eclipse.team.ui.ApplyPatchAction
+
+!ENTRY org.eclipse.ui 4 4 2023-08-12 15:50:52.564
+!MESSAGE Plug-in 'org.eclipse.ui.ide' contributed an invalid Menu Extension (Path: 'navigate/goTo' is invalid): goToResource
+
+!ENTRY org.eclipse.ui 4 4 2023-08-12 15:50:52.782
+!MESSAGE Plug-in 'org.eclipse.team.ui' contributed an invalid Menu Extension (Path: 'project' is invalid): org.eclipse.team.ui.ConfigureProject
+
+!ENTRY org.eclipse.ui 4 4 2023-08-12 15:50:52.783
+!MESSAGE Plug-in 'org.eclipse.team.ui' contributed an invalid Menu Extension (Path: 'project' is invalid): org.eclipse.team.ui.ApplyPatchAction
+
+!ENTRY org.eclipse.ui 4 4 2023-08-12 15:50:52.788
+!MESSAGE Plug-in 'org.eclipse.ui.ide' contributed an invalid Menu Extension (Path: 'navigate/goTo' is invalid): goToResource
+
+!ENTRY ilog.odms.ide.opllang 1 0 2023-08-12 15:52:54.492
+!MESSAGE concert_wrap.IloEndMT
