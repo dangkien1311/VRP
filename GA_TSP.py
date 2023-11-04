@@ -5,22 +5,31 @@ import datetime
 
 num_vehicles = 3
 vehicle_capacity = 10
-num_customers = 5
+num_customers = 100
 
 
-# Customer data: (ID, x-coordinate, y-coordinate, demand, time window start, time window end)
-customers = {
-    'depot' : (0, 0, 0, 0, 0, 100),
-    1: (1, 2, 3, 4, 6, 10),
-    2: (2, 5, 6, 3, 7, 9),
-    3: (3, 8, 9, 5, 9, 12),
-    4: (4, 3, 2, 2, 4, 7),
-    5: (5, 7, 8, 1, 5, 8)
-}
+with open('data.txt', 'r') as file:
+    lines = file.readlines()
+
+# Initialize the customers dictionary
+customers = {}
+
+# Process each line and create the dictionary entries
+for line in lines[1:]:  # Skip the header line
+    data = line.strip().split()
+    cust_no = int(data[0])
+    xcoord = int(data[1])
+    ycoord = int(data[2])
+    demand = int(data[3])
+    ready_time = int(data[4])
+    due_date = int(data[5])
+    service_time = int(data[6])
+    
+    customers[cust_no] = (cust_no,xcoord, ycoord, demand, ready_time, due_date, service_time)
 
 # Genetic algorithm parameters
-population_size = 30
-generations = 100
+population_size = 100
+generations = 200
 mutation_rate = 0.1
 
 def calculate_distance(coord1, coord2):
@@ -34,8 +43,8 @@ def solution_cost(solution):
     total_cost = 0
     current_time = 0
     current_load = 0
-    current_location = 'depot'
-    end_point = 'depot'
+    current_location = 0
+    end_point = 0
     for i in solution:
         total_cost += 5 * calculate_distance(customers[i],customers[current_location])
         current_location = i
@@ -74,7 +83,6 @@ def mutate(solution):
 def genetic_algorithm():
     count_solution = 0
     population = generate_population(population_size)
-    best_solution = []
     lowest_cost_element = 0
 
     for _ in range(generations):
@@ -85,7 +93,15 @@ def genetic_algorithm():
             population.remove(lowest_cost_element)
             new_population.append(lowest_cost_element)
         for _ in range(number_parents // 2):
-            parents = random.sample(population, 2)
+            total_costs = [x['cost'] for x in population]
+            average_total_cost = sum(total_costs) / len(total_costs)
+            # Filter elements with total cost less than average total cost
+            filtered_elements = [x for x in population if x['cost'] <= average_total_cost]
+            if len(filtered_elements) == 0:
+                filtered_elements = [x for x in population if x['cost'] <= average_total_cost + 10]
+            if len(filtered_elements) == 1:
+                return filtered_elements[0]
+            parents = random.sample(filtered_elements, 2)
             infant1, infant2 = crossover(parents[0]['route'], parents[1]['route'])
             infant1 = mutate(infant1)
             infant2 = mutate(infant2)
@@ -109,23 +125,14 @@ def genetic_algorithm():
             unique_list.append(item)
 
     print(unique_list)
-    while True:
-        if count_solution == num_vehicles:
-            return best_solution
-        else:
-            best_solution_i = min(unique_list, key=lambda x: x['cost'])
-            print(best_solution_i)
-            if best_solution_i not in best_solution:
-                best_solution.append(best_solution_i)
-                count_solution += 1
-                unique_list.remove(best_solution_i)
+    best_solution_i = min(unique_list, key=lambda x: x['cost'])
+    return best_solution_i
 
 # Run the genetic algorithm
 if __name__ == "__main__":
     start = datetime.datetime.now()
     best_solution = genetic_algorithm()
-    for i in range(0, len(best_solution)):
-        print(f"Best solution: {i + 1}", best_solution[i]['route'])
-        print(f"Best cost: {i + 1}", best_solution[i]['cost'])
+    print(f"Best solution: ", best_solution['route'])
+    print(f"Best cost: ", best_solution['cost'])
     processtime = datetime.datetime.now() - start
     print(f"process time: {processtime}")
