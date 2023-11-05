@@ -208,21 +208,20 @@ def genetic_algorithm():
     list_solution = []
     for _ in range(generations):
         print(gene)
-        # try:
-        print(population)
-        print("--------------------------------")
-        temp_populaiton = population[:-1]
-        new_gen = generate_newgeneration(temp_populaiton)
-        total_cost = sum(entry['cost'] for entry in new_gen)
-        new_gen.append({'total_cost' : total_cost})
-       
-        print(new_gen)
-        fitness_list.append(total_cost)
-        list_solution.append(new_gen)
-        population = new_gen
-        # except Exception as e:
-        #     print(e)
-            # break
+        try:
+            print(population)
+            print("----------------------------------------------------------------")
+            temp_populaiton = population[:-1]
+            new_gen = generate_newgeneration(temp_populaiton)
+            total_cost = sum(entry['cost'] for entry in new_gen)
+            new_gen.append({'total_cost' : total_cost})
+            print(new_gen)
+            fitness_list.append(total_cost)
+            list_solution.append(new_gen)
+            population = new_gen
+        except Exception as e:
+            print(e)
+            break
         gene += 1
     best_solution =  min(list_solution, key=lambda x: x[-1]['total_cost'])
     print(best_solution)
@@ -237,17 +236,22 @@ if __name__ == "__main__":
     start = datetime.datetime.now()
     best_solution = genetic_algorithm()
     print(best_solution)
+    print("----------------------------------------------------------------")
     for i in range(0, len(best_solution) -1):
         print(f"Route {i + 1}:", best_solution[i]['route'])
         cap = caculate_capacity(best_solution[i]['route'])
         print(f"capacity of route {i + 1}: {cap}")
         print(f"Cost for route {i + 1}:", best_solution[i]['cost'])
+        print("----------------------------------------------------------------")
+    print(f"Total cost: {best_solution[-1]['total_cost']}")
+    ratio = (1 - ((best_solution[-1]['total_cost'])/fitness_list[0])) * 100
+    print(f"solution is better {ratio}% than the origin population")
     processtime = datetime.datetime.now() - start
     print(f"process time: {processtime}")
     plt.plot(fitness_list)
     # Add labels and a title
-    plt.xlabel("X-axis (Index)")
-    plt.ylabel("Y-axis (Value)")
+    plt.xlabel("Generation")
+    plt.ylabel("Total cost")
     plt.title("Line chart of best solution in each generation")
 
     # Show the chart
