@@ -1,22 +1,28 @@
 import csv
 import math
+import multiprocessing
+import os
 import random
+import threading
 import numpy as np
 import datetime
 import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
+import time
+import sys
 
 with open('data.txt', 'r') as file:
     lines = file.readlines()
 
 # Initialize the customers dictionary
 customers = {}
-num_customers = 100
+num_customers = 500
+end_point_data = num_customers + 2
 cord_data = []
 # Process each line and create the dictionary entries
-for line in lines[1:]:  # Skip the header line
+for line in lines[1:end_point_data]:  # Skip the header line
     list_cord = []
-    data = line.strip().split()
+    data = line.strip().split(',')
     cust_no = int(data[0])
     xcoord = int(data[1])
     ycoord = int(data[2])
@@ -29,19 +35,19 @@ for line in lines[1:]:  # Skip the header line
     cord_data.append(list_cord)
     customers[cust_no] = (cust_no,xcoord, ycoord, demand, ready_time, due_date, service_time)
 
-num_vehicles = 3
-vehicle_capacity = 80
+# num_vehicles = 10
+vehicle_capacity = 200
 
 population_size = 4
 generations = 100
-mutation_rate = 0.1
+mutation_rate = 0.01
+pcv = 0.8
 
 
 fitness_list = []
 
 def check_condition(route):
     check = True
-    sum_demand = 0
     sum_demand = sum(customers[cus][3] for cus in route)
     if sum_demand > vehicle_capacity:
         check = False
@@ -53,16 +59,16 @@ def calculate_distance(coord1, coord2):
     distance = math.sqrt(x_diff ** 2 + y_diff ** 2)
     return distance
 
+
 # Calculate the total cost of a solution
 def solution_cost(solution):
     total_cost = 0
     current_location = 0
     end_point = 0
     for cust in solution:
-        total_cost += 5 * calculate_distance(customers[current_location],customers[cust])
+        total_cost += calculate_distance(customers[current_location],customers[cust])
         current_location = cust
-    total_cost += 5 * calculate_distance(customers[current_location], customers[end_point])
-
+    total_cost += calculate_distance(customers[current_location], customers[end_point])
     return total_cost
 
 
@@ -71,7 +77,10 @@ def generate_population(capacity,set_customer):
     set_route = []
     route_list = []
     list_filtered_route = []
+    punish = 0
+    start_time = time.time()
     while True:
+        start_time_service = 0
         capacity_value = capacity
         filtered_customers = []
         customers_to_remove_set = set(customer_id for sublist in list_filtered_route for customer_id in sublist)
@@ -84,9 +93,13 @@ def generate_population(capacity,set_customer):
         elif len(lst_filtered_cust) == 0:
             route_list.extend(list_filtered_route)
             break
+        elapsed_time = time.time() - start_time
+        if elapsed_time > 3:
+            start_time = time.time()
+            print("regenerate...")
+            list_filtered_route = []
+            continue
         for customer_id, customer_values in lst_filtered_cust.items():
-            if customer_id == 0:
-                continue
             if customer_values[3] <= capacity_value:
                 filtered_customers.append(customer_id)
                 capacity_value -= customer_values[3]
@@ -105,11 +118,9 @@ def generate_population(capacity,set_customer):
     return set_route
 
 def crossover(route1, route2):
-    # Generate random positions for slides
     min_len = min(len(route1),len(route2))
     positions = random.sample(range(0, min_len), 2)
     positions.sort()
-
     new_route1 = route1.copy()
     new_route2 = route2.copy()
     start_index = 0
@@ -119,48 +130,52 @@ def crossover(route1, route2):
             index2 = random.randint(start_index, i)
             new_route1[index1], new_route2[index2] = new_route2[index2], new_route1[index1]
         start_index = i
+    new_route1 = mutate(new_route1)
+    new_route2 = mutate(new_route2)
     return new_route1, new_route2
+    
 
 
 # Mutate a solution by swapping two customers
 def mutate(solution):
-    mutated_solution = solution[:]
     if random.random() < mutation_rate:
-        idx1, idx2 = random.sample(range(len(mutated_solution)), 2)
-        mutated_solution[idx1], mutated_solution[idx2] = mutated_solution[idx2], mutated_solution[idx1]
-    return mutated_solution
+        idx1, idx2 = random.sample(range(len(solution)), 2)
+        solution[idx1], solution[idx2] = solution[idx2], solution[idx1]
+    return solution
 
-
-def factorial_iterative(n):
-    result = 1
-    for i in range(1, n + 1):
-        result *= i
-    return result
-    
-def is_route_exists(route, generation):
-    for item in generation:
-        if item['route'] == route:
-            return True
-    return False
    
-def generate_newgeneration(parent_generation):
+def generate_newgeneration(parent_generation,remain_ratio):
     new_generation = []
+    origin_goal_len = len(parent_generation)
+    pop_num = int(origin_goal_len * remain_ratio)
+    for _ in range(0,pop_num):
+        elite_child = min(parent_generation, key  = lambda x: x['cost'])
+        elite_index = parent_generation.index(elite_child)
+        del parent_generation[elite_index]
+        new_generation.append(elite_child)
     goal_len = len(parent_generation)
-    
     if goal_len % 2 == 1:
             elite_child = min(parent_generation, key  = lambda x: x['cost'])
             elite_index = parent_generation.index(elite_child)
             del parent_generation[elite_index]
             new_generation.append(elite_child)
-
+    count_pvc = 0
+    acp_cros = int((len(parent_generation)/2) * pcv)
     while True:
         list_parent = [i for i in range(len(parent_generation))]
-
-        if len(new_generation) == goal_len:
+        
+        if len(new_generation) == origin_goal_len:
             break
-        #get random two parent
 
+        #apply crossover rate
+        if count_pvc == acp_cros:
+            for i in parent_generation:
+                new_generation.append(i)
+            break
+
+        #get random two parent
         index = random.sample(list_parent,2)
+        
       
         route1 = parent_generation[index[0]]['route']
         route2 = parent_generation[index[1]]['route']
@@ -175,6 +190,7 @@ def generate_newgeneration(parent_generation):
         sum_cost = parent_generation[index[0]]['cost'] + parent_generation[index[1]]['cost']
         value1 = solution_cost(new_route1)
         value2 = solution_cost(new_route2)
+       
         if sum_cost < (value1 + value2):
             continue
 
@@ -196,12 +212,13 @@ def generate_newgeneration(parent_generation):
                 'cost' : value2
             }
         ])
-    
+        count_pvc += 1 
     return new_generation 
 
+        
 # Main genetic algorithm loop
 def genetic_algorithm():
-    population = generate_population(vehicle_capacity,customers)
+    population = generate_population(vehicle_capacity, customers)
     print(population)
     fitness_list.append(population[-1]['total_cost'])
     gene = 0
@@ -212,7 +229,7 @@ def genetic_algorithm():
             print(population)
             print("----------------------------------------------------------------")
             temp_populaiton = population[:-1]
-            new_gen = generate_newgeneration(temp_populaiton)
+            new_gen = generate_newgeneration(temp_populaiton,0.2)
             total_cost = sum(entry['cost'] for entry in new_gen)
             new_gen.append({'total_cost' : total_cost})
             print(new_gen)
@@ -223,17 +240,17 @@ def genetic_algorithm():
             print(e)
             break
         gene += 1
-    best_solution =  min(list_solution, key=lambda x: x[-1]['total_cost'])
+    best_solution = list_solution[-1]
     print(best_solution)
     return best_solution
 
-# Run the genetic algorithm
 def caculate_capacity(route):
     sum_demand = 0
     sum_demand = sum(customers[cus][3] for cus in route)
     return sum_demand
-if __name__ == "__main__":
-    start = datetime.datetime.now()
+
+def run_program():
+    total_demand = 0
     best_solution = genetic_algorithm()
     print(best_solution)
     print("----------------------------------------------------------------")
@@ -241,18 +258,42 @@ if __name__ == "__main__":
         print(f"Route {i + 1}:", best_solution[i]['route'])
         cap = caculate_capacity(best_solution[i]['route'])
         print(f"capacity of route {i + 1}: {cap}")
+        total_demand += cap
         print(f"Cost for route {i + 1}:", best_solution[i]['cost'])
         print("----------------------------------------------------------------")
     print(f"Total cost: {best_solution[-1]['total_cost']}")
-    ratio = (1 - ((best_solution[-1]['total_cost'])/fitness_list[0])) * 100
-    print(f"solution is better {ratio}% than the origin population")
-    processtime = datetime.datetime.now() - start
-    print(f"process time: {processtime}")
+    ratio = round((1 - ((best_solution[-1]['total_cost'])/fitness_list[0])) * 100,2)
+    print(f"population in generations {generations} is {ratio}% better than the origin one")
+    print(f"total_demand {total_demand} ")
     plt.plot(fitness_list)
     # Add labels and a title
     plt.xlabel("Generation")
     plt.ylabel("Total cost")
-    plt.title("Line chart of best solution in each generation")
+    plt.title("Line chart of total cost on each generation")
 
-    # Show the chart
-    plt.show()
+    plt.savefig('output.png')
+    return 0
+
+if __name__ == "__main__":
+    start = datetime.datetime.now()
+    # max_execution_time = 60  # Max execution time in seconds
+    # while True:
+    #     process = multiprocessing.Process(target=run_program)
+    #     start_time = datetime.datetime.now()
+    #     process.start()
+        
+    #     process.join(max_execution_time)  # Wait for the process to complete or timeout
+        
+    #     elapsed_time = (datetime.datetime.now() - start_time).total_seconds()
+    #     if elapsed_time >= max_execution_time:
+    #         print("Execution time limit reached. Terminating the process.")
+    #         process.terminate()
+    #         process.join()  # Wait for the process to terminate
+    #     else:
+    #         print("Execution completed within the time limit.")
+            # processtime = datetime.datetime.now() - start
+            # print(f"process time: {processtime}")
+            # sys.exit()
+    run_program()
+    processtime = datetime.datetime.now() - start
+    print(f"process time: {processtime}")
