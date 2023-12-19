@@ -38,7 +38,7 @@ for line in lines[1:end_point_data]:  # Skip the header line
 # num_vehicles = 10
 vehicle_capacity = 200
 
-population_size = 4
+population_size = 100
 generations = 100
 mutation_rate = 0.01
 pcv = 0.8
@@ -59,83 +59,89 @@ def calculate_distance(coord1, coord2):
     distance = math.sqrt(x_diff ** 2 + y_diff ** 2)
     return distance
 
+def split_route(route):
+    total_demand = 0
+    demand_groups = []
+    current_group = []
+
+    for i in route:
+        # Check if adding the current demand exceeds 80
+        if total_demand + customers[i][3] <= vehicle_capacity:
+            current_group.append(i)
+            total_demand += customers[i][3]
+        else:
+            demand_groups.append(current_group)
+            current_group = [i]
+            total_demand = customers[i][3]
+
+    # Append the last group
+    if current_group:
+        demand_groups.append(current_group)
+    return demand_groups
 
 # Calculate the total cost of a solution
 def solution_cost(solution):
-    total_cost = 0
-    current_location = 0
-    end_point = 0
-    for cust in solution:
-        total_cost += calculate_distance(customers[current_location],customers[cust])
-        current_location = cust
-    total_cost += calculate_distance(customers[current_location], customers[end_point])
-    return total_cost
+    fn_cost = 0
+    for route in solution:
+        total_cost = 0
+        current_location = 0
+        end_point = 0
+        for cust in route:
+            total_cost += calculate_distance(customers[current_location],customers[cust])
+            current_location = cust
+        total_cost += calculate_distance(customers[current_location], customers[end_point])
+        fn_cost+=total_cost
+    return fn_cost
 
 
 # Create an initial random population
-def generate_population(capacity,set_customer):
-    set_route = []
-    route_list = []
-    list_filtered_route = []
-    punish = 0
-    start_time = time.time()
-    while True:
-        start_time_service = 0
-        capacity_value = capacity
-        filtered_customers = []
-        customers_to_remove_set = set(customer_id for sublist in list_filtered_route for customer_id in sublist)
-        keys_to_shuffle = [key for key,value in set_customer.items() if key not in customers_to_remove_set]
-        random.shuffle(keys_to_shuffle)
-        lst_filtered_cust = {key: set_customer[key] for key in keys_to_shuffle if key != 0}
-        if len(lst_filtered_cust) == 1:
-            list_filtered_route = []
-            continue
-        elif len(lst_filtered_cust) == 0:
-            route_list.extend(list_filtered_route)
-            break
-        elapsed_time = time.time() - start_time
-        if elapsed_time > 3:
-            start_time = time.time()
-            print("regenerate...")
-            list_filtered_route = []
-            continue
-        for customer_id, customer_values in lst_filtered_cust.items():
-            if customer_values[3] <= capacity_value:
-                filtered_customers.append(customer_id)
-                capacity_value -= customer_values[3]
-        list_filtered_route.append(filtered_customers)
-    population_with_value = []
-    total_cost = 0
-    for citizen in route_list:
-        value = solution_cost(citizen)
-        population_with_value.append({
-            'route' : citizen,
-            'cost': value
-            })
-        total_cost += value
-    population_with_value.append({'total_cost' : total_cost})
-    set_route.extend(population_with_value)
-    return set_route
-
-def crossover(route1, route2):
-    min_len = min(len(route1),len(route2))
-    positions = random.sample(range(0, min_len), 2)
-    positions.sort()
-    new_route1 = route1.copy()
-    new_route2 = route2.copy()
-    start_index = 0
-    for i in positions:
-        for _ in range(start_index,i):
-            index1 = random.randint(start_index, i)
-            index2 = random.randint(start_index, i)
-            new_route1[index1], new_route2[index2] = new_route2[index2], new_route1[index1]
-        start_index = i
-    new_route1 = mutate(new_route1)
-    new_route2 = mutate(new_route2)
-    return new_route1, new_route2
+def generate_population(capacity,set_customer,population_size):
+    population = []
+    for _ in range(population_size):
+        route_list = []
+        list_filtered_route = []
+        while True:
+            capacity_value = capacity
+            filtered_customers = []
+            customers_to_remove_set = set(customer_id for sublist in list_filtered_route for customer_id in sublist)
+            keys_to_shuffle = [key for key,value in set_customer.items() if key not in customers_to_remove_set]
+            random.shuffle(keys_to_shuffle)
+            lst_filtered_cust = {key: set_customer[key] for key in keys_to_shuffle if key != 0}
+            if len(lst_filtered_cust) == 1:
+                list_filtered_route = []
+                continue
+            elif len(lst_filtered_cust) == 0:
+                route_list.extend(list_filtered_route)
+                break
+            for customer_id, customer_values in lst_filtered_cust.items():
+                if customer_values[3] <= capacity_value:
+                    filtered_customers.append(customer_id)
+                    capacity_value -= customer_values[3]
+            list_filtered_route.append(filtered_customers)
+        flattened_list = []
+        [flattened_list.extend(sublist) for sublist in route_list]
+        total_value = solution_cost(split_route(flattened_list))
+        flattened_list.append(total_value)
+        population.append(flattened_list)
+    return population
+def crossover(parentA, parentB):
+    parentA = parentA[:-1]
+    parentB = parentB[:-1]
+    childs = []
+    for _ in range(0,2):
+        positions = random.sample(range(0,len(parentA)), 2)
+        positions.sort()
+        child = [0] * len(parentA)
+        child[positions[0]:positions[1]] = parentA[positions[0]:positions[1]]
+        p2genes = [gene for gene in parentB if gene not in child]
+        child[:positions[0]] = p2genes[:positions[0]]
+        child[positions[1]:] = p2genes[positions[0]:]
+        child = mutate(child)
+        cost = solution_cost(split_route(child))
+        child.append(cost)
+        childs.append(child)
+    return childs
     
-
-
 # Mutate a solution by swapping two customers
 def mutate(solution):
     if random.random() < mutation_rate:
@@ -143,105 +149,70 @@ def mutate(solution):
         solution[idx1], solution[idx2] = solution[idx2], solution[idx1]
     return solution
 
-   
 def generate_newgeneration(parent_generation,remain_ratio):
     new_generation = []
     origin_goal_len = len(parent_generation)
-    pop_num = int(origin_goal_len * remain_ratio)
+    pop_num = int((origin_goal_len) * remain_ratio)
     for _ in range(0,pop_num):
-        elite_child = min(parent_generation, key  = lambda x: x['cost'])
+        elite_child = min(parent_generation, key  = lambda x: x[-1])
         elite_index = parent_generation.index(elite_child)
         del parent_generation[elite_index]
         new_generation.append(elite_child)
     goal_len = len(parent_generation)
     if goal_len % 2 == 1:
-            elite_child = min(parent_generation, key  = lambda x: x['cost'])
+            elite_child = min(parent_generation, key  = lambda x: x[-1])
             elite_index = parent_generation.index(elite_child)
             del parent_generation[elite_index]
             new_generation.append(elite_child)
     count_pvc = 0
-    acp_cros = int((len(parent_generation)/2) * pcv)
+    acp_cros = int(((len(parent_generation))/2) * pcv)
+    list_parent = sorted(parent_generation, key = lambda x: x[-1])
+    cut = int((len(parent_generation))/2)
+    list_parent = list_parent[:cut]
     while True:
-        list_parent = [i for i in range(len(parent_generation))]
-        
         if len(new_generation) == origin_goal_len:
             break
+        
+        #get random two parent
+        index = random.sample(range(0,len(list_parent)),2)
+
+        route1 = list_parent[index[0]]
+        route2 = list_parent[index[1]]
 
         #apply crossover rate
-        if count_pvc == acp_cros:
-            for i in parent_generation:
-                new_generation.append(i)
-            break
-
-        #get random two parent
-        index = random.sample(list_parent,2)
-        
+        if count_pvc >= acp_cros:
+            new_generation.append(route1)
+            new_generation.append(route2)
+            continue
       
-        route1 = parent_generation[index[0]]['route']
-        route2 = parent_generation[index[1]]['route']
+        route1 = list_parent[index[0]]
+        route2 = list_parent[index[1]]
         #crossover two parent
-        new_route1, new_route2 = crossover(route1,route2)
-
-        #check condition of two new child
-        if check_condition(new_route1) == False or check_condition(new_route2) == False:
-            continue
-
-        #caculate sum to check if sum cost if next gen is better than previous one
-        sum_cost = parent_generation[index[0]]['cost'] + parent_generation[index[1]]['cost']
-        value1 = solution_cost(new_route1)
-        value2 = solution_cost(new_route2)
-       
-        if sum_cost < (value1 + value2):
-            continue
-
-        #delete parent
-        if index[0] > index[1]:
-            del parent_generation[index[0]]
-            del parent_generation[index[1]]
-        else:
-            del parent_generation[index[1]]
-            del parent_generation[index[0]]
-
-        new_generation.extend([
-            {
-                'route' : new_route1,
-                'cost' : value1
-            },
-            {
-                'route' : new_route2,
-                'cost' : value2
-            }
-        ])
+        new_routes = crossover(route1,route2)
+        new_generation.extend(new_routes)
         count_pvc += 1 
     return new_generation 
 
         
 # Main genetic algorithm loop
 def genetic_algorithm():
-    population = generate_population(vehicle_capacity, customers)
-    print(population)
-    fitness_list.append(population[-1]['total_cost'])
+    population = generate_population(vehicle_capacity,customers,population_size)
+    bestP = min(population, key= lambda x:x[-1])
+    fitness_list.append(bestP[-1])
     gene = 0
-    list_solution = []
     for _ in range(generations):
-        print(gene)
-        try:
-            print(population)
-            print("----------------------------------------------------------------")
-            temp_populaiton = population[:-1]
-            new_gen = generate_newgeneration(temp_populaiton,0.2)
-            total_cost = sum(entry['cost'] for entry in new_gen)
-            new_gen.append({'total_cost' : total_cost})
-            print(new_gen)
-            fitness_list.append(total_cost)
-            list_solution.append(new_gen)
-            population = new_gen
-        except Exception as e:
-            print(e)
-            break
+        # print(gene)
+        # print(population)
+        # print(f'length of parent: {len(population)}')
+        # print("----------------------------------------------------------------")
+        new_gen = generate_newgeneration(population,0.2)
+        # print(new_gen)
+        # print(f'length of child: {len(new_gen)}')
+        bestG = min(new_gen, key= lambda x:x[-1])
+        fitness_list.append(bestG[-1])
+        population = new_gen
         gene += 1
-    best_solution = list_solution[-1]
-    print(best_solution)
+    best_solution = min(population, key= lambda x:x[-1])
     return best_solution
 
 def caculate_capacity(route):
@@ -252,17 +223,20 @@ def caculate_capacity(route):
 def run_program():
     total_demand = 0
     best_solution = genetic_algorithm()
+    total_cost = best_solution[-1]
+    best_solution = best_solution[:-1]
+    result = split_route(best_solution)
     print(best_solution)
     print("----------------------------------------------------------------")
-    for i in range(0, len(best_solution) -1):
-        print(f"Route {i + 1}:", best_solution[i]['route'])
-        cap = caculate_capacity(best_solution[i]['route'])
+    for i in range(0, len(result)):
+        print(f"Route {i + 1}:", result[i])
+        cap = caculate_capacity(result[i])
         print(f"capacity of route {i + 1}: {cap}")
         total_demand += cap
-        print(f"Cost for route {i + 1}:", best_solution[i]['cost'])
+        print(f"Cost for route {i + 1}:", solution_cost([result[i]]))
         print("----------------------------------------------------------------")
-    print(f"Total cost: {best_solution[-1]['total_cost']}")
-    ratio = round((1 - ((best_solution[-1]['total_cost'])/fitness_list[0])) * 100,2)
+    print(f"Total cost: {total_cost}")
+    ratio = round((1 - ((total_cost)/fitness_list[0])) * 100,2)
     print(f"population in generations {generations} is {ratio}% better than the origin one")
     print(f"total_demand {total_demand} ")
     plt.plot(fitness_list)
