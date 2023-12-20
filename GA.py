@@ -16,7 +16,7 @@ with open('data.txt', 'r') as file:
 
 # Initialize the customers dictionary
 customers = {}
-num_customers = 500
+num_customers = 50
 end_point_data = num_customers + 2
 cord_data = []
 # Process each line and create the dictionary entries
@@ -36,7 +36,7 @@ for line in lines[1:end_point_data]:  # Skip the header line
     customers[cust_no] = (cust_no,xcoord, ycoord, demand, ready_time, due_date, service_time)
 
 # num_vehicles = 10
-vehicle_capacity = 200
+vehicle_capacity = 80
 
 population_size = 100
 generations = 100
@@ -65,7 +65,6 @@ def split_route(route):
     current_group = []
 
     for i in route:
-        # Check if adding the current demand exceeds 80
         if total_demand + customers[i][3] <= vehicle_capacity:
             current_group.append(i)
             total_demand += customers[i][3]
@@ -74,7 +73,6 @@ def split_route(route):
             current_group = [i]
             total_demand = customers[i][3]
 
-    # Append the last group
     if current_group:
         demand_groups.append(current_group)
     return demand_groups
@@ -124,6 +122,8 @@ def generate_population(capacity,set_customer,population_size):
         flattened_list.append(total_value)
         population.append(flattened_list)
     return population
+
+# OX1 crossover
 def crossover(parentA, parentB):
     parentA = parentA[:-1]
     parentB = parentB[:-1]
@@ -165,30 +165,20 @@ def generate_newgeneration(parent_generation,remain_ratio):
             del parent_generation[elite_index]
             new_generation.append(elite_child)
     count_pvc = 0
-    acp_cros = int(((len(parent_generation))/2) * pcv)
     list_parent = sorted(parent_generation, key = lambda x: x[-1])
     cut = int((len(parent_generation))/2)
     list_parent = list_parent[:cut]
     while True:
         if len(new_generation) == origin_goal_len:
             break
-        
         #get random two parent
         index = random.sample(range(0,len(list_parent)),2)
-
         route1 = list_parent[index[0]]
         route2 = list_parent[index[1]]
-
-        #apply crossover rate
-        if count_pvc >= acp_cros:
-            new_generation.append(route1)
-            new_generation.append(route2)
-            continue
-      
-        route1 = list_parent[index[0]]
-        route2 = list_parent[index[1]]
+        new_routes = [route1,route2]
         #crossover two parent
-        new_routes = crossover(route1,route2)
+        if random.random() <= pcv:
+            new_routes = crossover(route1,route2)
         new_generation.extend(new_routes)
         count_pvc += 1 
     return new_generation 
