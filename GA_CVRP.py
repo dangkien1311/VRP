@@ -16,7 +16,7 @@ with open('data.txt', 'r') as file:
 
 # Initialize the customers dictionary
 customers = {}
-num_customers = 50
+num_customers = 200
 end_point_data = num_customers + 2
 cord_data = []
 # Process each line and create the dictionary entries
@@ -36,7 +36,7 @@ for line in lines[1:end_point_data]:  # Skip the header line
     customers[cust_no] = (cust_no,xcoord, ycoord, demand, ready_time, due_date, service_time)
 
 # num_vehicles = 10
-vehicle_capacity = 80
+vehicle_capacity = 200
 
 population_size = 100
 generations = 100
@@ -123,7 +123,7 @@ def generate_population(capacity,set_customer,population_size):
         population.append(flattened_list)
     return population
 
-# OX1 crossover
+# OX1 crossover 2 point ++
 def crossover(parentA, parentB):
     parentA = parentA[:-1]
     parentB = parentB[:-1]
@@ -141,7 +141,26 @@ def crossover(parentA, parentB):
         child.append(cost)
         childs.append(child)
     return childs
-    
+
+# # OX1 crossover 1 point +
+# def crossover(parentA, parentB):
+#     parentA = parentA[:-1]
+#     parentB = parentB[:-1]
+#     childs = []
+#     for _ in range(0,2):
+#         positions = random.sample(range(0,len(parentA)), 1)
+#         child = [0] * len(parentA) 
+#         child[:positions[0]] = parentA[:positions[0]]
+#         p2genes = [gene for gene in parentB if gene not in child]
+#         child[positions[0]:] = p2genes
+#         child = mutate(child)
+#         cost = solution_cost(split_route(child))
+#         child.append(cost)
+#         childs.append(child)
+#     return childs
+
+
+
 # Mutate a solution by swapping two customers
 def mutate(solution):
     if random.random() < mutation_rate:
