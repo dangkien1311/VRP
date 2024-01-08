@@ -35,17 +35,14 @@ for line in lines[1:end_point_data]:  # Skip the header line
     cord_data.append(list_cord)
     customers[cust_no] = (cust_no,xcoord, ycoord, demand, ready_time, due_date, service_time)
 
-
 # num_vehicles = 10
 vehicle_capacity = 200
 
-population_size = 100
-generations = 1000
+population_size = 150
+generations = 100
 mutation_rate = 0.01
 pcv = 0.8
 
-total_wait = 0
-total_punish = 0
 
 fitness_list = []
 
@@ -66,51 +63,52 @@ def split_route(route):
     total_demand = 0
     demand_groups = []
     current_group = []
-
+    service_time = 0
+    cus_before = 0
     for i in route:
-        if total_demand + customers[i][3] <= vehicle_capacity:
+        if service_time == 0:
+            service_time = random.randint(customers[i][4],customers[i][5])
+        if service_time != 0:
+            service_time = service_time + customers[cus_before][6] + calculate_distance(customers[i],customers[cus_before])
+        if total_demand + customers[i][3] <= vehicle_capacity and (service_time >= (customers[i][4] - 500) and service_time <= (customers[i][5] + 500)):
             current_group.append(i)
             total_demand += customers[i][3]
         else:
             demand_groups.append(current_group)
             current_group = [i]
             total_demand = customers[i][3]
-
-    if current_group:
-        demand_groups.append(current_group)
+            service_time = 0
+        cus_before = i
+    demand_groups.append(current_group)
     return demand_groups
 
-def calculate_wait_punish(solution):
-    total = 0
-    for route in solution:
-        wait_punish = 0
-        service_time = 0
-        for cus in route:   
-            if service_time != 0:
-                service_time = service_time + customers[cus_before][6] + calculate_distance(customers[cus],customers[cus_before])
-            elif service_time == 0 :
-                service_time = random.randint(customers[cus][4],customers[cus][5])
-            # if service_time < customers[cus][4]:
-                # wait_punish += (customers[cus][4] - service_time)
-            if service_time > customers[cus][5]:
-                wait_punish += (service_time - customers[cus][5])
-            cus_before = cus
-        total += wait_punish
-    return total
 # Calculate the total cost of a solution
 def solution_cost(solution):
     fn_cost = 0
+    wait = 0
+    punish = 0
     for route in solution:
         total_cost = 0
         current_location = 0
         end_point = 0
+        service_time = 0
         for cust in route:
+            if service_time != 0:
+                service_time = service_time + customers[cus_before][6] + calculate_distance(customers[cust],customers[cus_before])
+            if service_time == 0 :
+                service_time = random.randint(customers[cust][4],customers[cust][5])
+            if service_time < customers[cust][4]:
+                wait += (customers[cust][4] - service_time)
+            if service_time > customers[cust][5]:
+                punish += (service_time - customers[cust][5])
             total_cost += calculate_distance(customers[current_location],customers[cust])
             current_location = cust
+            cus_before = cust
         total_cost += calculate_distance(customers[current_location], customers[end_point])
         fn_cost+=total_cost
-    fn_cost += calculate_wait_punish(solution)
-    return fn_cost
+    raw_cost = fn_cost
+    fn_cost = fn_cost + wait + punish 
+    return {'total_cost' : fn_cost, 'wait' : wait, 'punish' : punish, 'cost': raw_cost}
 
 
 # Create an initial random population
@@ -136,26 +134,21 @@ def generate_population(capacity,set_customer,population_size):
                 route_list.extend(list_filtered_route)
                 break
             for customer_id, customer_values in lst_filtered_cust.items():
-                # if service_time != 0:
-                #     service_time = service_time + cus_before[6] + calculate_distance(customer_values,cus_before)
-                # if service_time == 0 :
-                #     service_time = random.randint(customer_values[4],customer_values[5])
-                if customer_values[3] <= capacity_value:
-                    # if service_time < customer_values[4]:
-                    #     wait += (customer_values[4] - service_time)
-                    # if service_time > customer_values[5]:
-                    #     punish += (service_time - customer_values[5])
+                if service_time != 0:
+                    service_time = service_time + cus_before[6] + calculate_distance(customer_values,cus_before)
+                if service_time == 0 :
+                    service_time = random.randint(customer_values[4],customer_values[5])
+                if customer_values[3] <= capacity_value and (service_time >= (customer_values[4] - 500) and service_time <= (customer_values[5] + 500)):
                     filtered_customers.append(customer_id)
                     capacity_value -= customer_values[3]
-                # cus_before = customer_values
+                cus_before = customer_values
             if len(filtered_customers) == 0 or len(filtered_customers) == 1:
                 continue
             list_filtered_route.append(filtered_customers)
         flattened_list = []
         [flattened_list.extend(sublist) for sublist in route_list]
-        # print(wait,punish)
         total_value = solution_cost(split_route(flattened_list))
-        flattened_list.append(total_value)
+        flattened_list.append(total_value['total_cost'])
         population.append(flattened_list)
     return population
 
@@ -174,7 +167,7 @@ def crossover(parentA, parentB):
         child[positions[1]:] = p2genes[positions[0]:]
         child = mutate(child)
         cost = solution_cost(split_route(child))
-        child.append(cost)
+        child.append(cost['total_cost'])
         childs.append(child)
     return childs
     
@@ -200,7 +193,6 @@ def generate_newgeneration(parent_generation,remain_ratio):
             elite_index = parent_generation.index(elite_child)
             del parent_generation[elite_index]
             new_generation.append(elite_child)
-    count_pvc = 0
     list_parent = sorted(parent_generation, key = lambda x: x[-1])
     cut = int((len(parent_generation))/2)
     list_parent = list_parent[:cut]
@@ -216,7 +208,6 @@ def generate_newgeneration(parent_generation,remain_ratio):
         if random.random() <= pcv:
             new_routes = crossover(route1,route2)
         new_generation.extend(new_routes)
-        count_pvc += 1 
     return new_generation 
 
         
@@ -251,6 +242,7 @@ def run_program():
     total_cost = best_solution[-1]
     best_solution = best_solution[:-1]
     result = split_route(best_solution)
+    fn_route_cost = solution_cost(result)
     print(best_solution)
     print("----------------------------------------------------------------")
     for i in range(0, len(result)):
@@ -258,13 +250,17 @@ def run_program():
         cap = caculate_capacity(result[i])
         print(f"capacity of route {i + 1}: {cap}")
         total_demand += cap
-        print(f"Cost for route {i + 1}:", solution_cost([result[i]]))
+        route_cost = solution_cost([result[i]])
+        print(f"Cost for route {i + 1}:", route_cost['total_cost'])
+        print(f"wait for route {i + 1}:", route_cost['wait'])
+        print(f"punish for route {i + 1}:", route_cost['punish'])
         print("----------------------------------------------------------------")
     print(f"Total cost: {total_cost}")
+    print(f"Total wait: {fn_route_cost['wait']}")
+    print(f"Total punish: {fn_route_cost['punish']}")
     ratio = round((1 - ((total_cost)/fitness_list[0])) * 100,2)
     print(f"population in generations {generations} is {ratio}% better than the origin one")
     print(f"total_demand {total_demand} ")
-    print("total wait: ", calculate_wait_punish(result))
     plt.plot(fitness_list)
     # Add labels and a title
     plt.xlabel("Generation")
