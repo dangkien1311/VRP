@@ -35,23 +35,26 @@ for line in lines[1:end_point_data]:  # Skip the header line
     cord_data.append(list_cord)
     customers[cust_no] = (cust_no,xcoord, ycoord, demand, ready_time, due_date, service_time)
 
+# print(max(customers.values(), key= lambda x:x[4]))
+
 # num_vehicles = 10
 vehicle_capacity = 200
-
-population_size = 150
+population_size = 100
 generations = 100
 mutation_rate = 0.01
 pcv = 0.8
 
 
 fitness_list = []
+chart_punish = []
+chart_wait = []
 
-def check_condition(route):
-    check = True
-    sum_demand = sum(customers[cus][3] for cus in route)
-    if sum_demand > vehicle_capacity:
-        check = False
-    return check
+# def check_condition(route):
+#     check = True
+#     sum_demand = sum(customers[cus][3] for cus in route)
+#     if sum_demand > vehicle_capacity:
+#         check = False
+#     return check
 
 def calculate_distance(coord1, coord2):
     x_diff = coord1[1] - coord2[1]
@@ -67,7 +70,8 @@ def split_route(route):
     cus_before = 0
     for i in route:
         if service_time == 0:
-            service_time = random.randint(customers[i][4],customers[i][5])
+            # service_time = random.randint(customers[i][4],customers[i][5])
+            service_time = customers[i][4]
         if service_time != 0:
             service_time = service_time + customers[cus_before][6] + calculate_distance(customers[i],customers[cus_before])
         if total_demand + customers[i][3] <= vehicle_capacity and (service_time >= (customers[i][4] - 500) and service_time <= (customers[i][5] + 500)):
@@ -96,7 +100,8 @@ def solution_cost(solution):
             if service_time != 0:
                 service_time = service_time + customers[cus_before][6] + calculate_distance(customers[cust],customers[cus_before])
             if service_time == 0 :
-                service_time = random.randint(customers[cust][4],customers[cust][5])
+                # service_time = random.randint(customers[cust][4],customers[cust][5])
+                service_time = customers[cust][4]
             if service_time < customers[cust][4]:
                 wait += (customers[cust][4] - service_time)
             if service_time > customers[cust][5]:
@@ -127,22 +132,23 @@ def generate_population(capacity,set_customer,population_size):
             keys_to_shuffle = [key for key,value in set_customer.items() if key not in customers_to_remove_set]
             random.shuffle(keys_to_shuffle)
             lst_filtered_cust = {key: set_customer[key] for key in keys_to_shuffle if key != 0}
-            if len(lst_filtered_cust) == 1:
-                list_filtered_route = []
-                continue
-            elif len(lst_filtered_cust) == 0:
+            # if len(lst_filtered_cust) == 1:
+            #     list_filtered_route = []
+            #     continue
+            if len(lst_filtered_cust) == 0:
                 route_list.extend(list_filtered_route)
                 break
             for customer_id, customer_values in lst_filtered_cust.items():
                 if service_time != 0:
                     service_time = service_time + cus_before[6] + calculate_distance(customer_values,cus_before)
                 if service_time == 0 :
-                    service_time = random.randint(customer_values[4],customer_values[5])
+                    # service_time = random.randint(customer_values[4],customer_values[5])
+                    service_time = customer_values[4]
                 if customer_values[3] <= capacity_value and (service_time >= (customer_values[4] - 500) and service_time <= (customer_values[5] + 500)):
                     filtered_customers.append(customer_id)
                     capacity_value -= customer_values[3]
                 cus_before = customer_values
-            if len(filtered_customers) == 0 or len(filtered_customers) == 1:
+            if len(filtered_customers) == 0:
                 continue
             list_filtered_route.append(filtered_customers)
         flattened_list = []
@@ -152,23 +158,75 @@ def generate_population(capacity,set_customer,population_size):
         population.append(flattened_list)
     return population
 
-# OX1 crossover
+# OX crossover need repair
 def crossover(parentA, parentB):
     parentA = parentA[:-1]
     parentB = parentB[:-1]
     childs = []
+    index = 0
     for _ in range(0,2):
-        positions = random.sample(range(0,len(parentA)), 2)
-        positions.sort()
-        child = [0] * len(parentA)
-        child[positions[0]:positions[1]] = parentA[positions[0]:positions[1]]
-        p2genes = [gene for gene in parentB if gene not in child]
-        child[:positions[0]] = p2genes[:positions[0]]
-        child[positions[1]:] = p2genes[positions[0]:]
-        child = mutate(child)
-        cost = solution_cost(split_route(child))
-        child.append(cost['total_cost'])
-        childs.append(child)
+        if index ==0:
+            positions = random.sample(range(0,len(parentA)), 2)
+            positions.sort()
+            child = [0] * len(parentA)
+            child[positions[0]:positions[1]] = parentA[positions[0]:positions[1]]
+            p2genes = [gene for gene in parentB if gene not in child]
+            child[:positions[0]] = p2genes[:positions[0]]
+            child[positions[1]:] = p2genes[positions[0]:]
+            child = mutate(child)
+            cost = solution_cost(split_route(child))
+            child.append(cost['total_cost'])
+            childs.append(child)
+        else:
+            positions = random.sample(range(0,len(parentB)), 2)
+            positions.sort()
+            child = [0] * len(parentB)
+            child[positions[0]:positions[1]] = parentB[positions[0]:positions[1]]
+            p2genes = [gene for gene in parentA if gene not in child]
+            child[:positions[0]] = p2genes[:positions[0]]
+            child[positions[1]:] = p2genes[positions[0]:]
+            child = mutate(child)
+            cost = solution_cost(split_route(child))
+            child.append(cost['total_cost'])
+            childs.append(child)
+        index +=1
+    return childs
+
+# heuristic OX crossover 
+def heuristic_crossover(parentA, parentB):
+    def calculate_split_cost(parent):
+        for i in parent:
+            cost_i = solution_cost([i])
+            i.append(cost_i['total_cost'])
+        return parent
+    parentA = parentA[:-1]
+    parentB = parentB[:-1]
+    childs = []
+    split_parentA = calculate_split_cost(split_route(parentA))
+    split_parentB = calculate_split_cost(split_route(parentB))
+    index = 0
+    for _ in range(0,2):
+        if index == 0:
+            child = [0] * len(parentA)
+            best_pA = min(split_parentA, key= lambda x:x[-1])
+            child[:len(best_pA)-1] = best_pA[:-1]
+            p2genes = [gene for gene in parentB if gene not in child]
+            child[len(best_pA)-1:] = p2genes
+            child = mutate(child)
+            cost = solution_cost(split_route(child))
+            child.append(cost['total_cost'])
+            childs.append(child)
+        else:
+            child = [0] * len(parentB)
+            best_pB = min(split_parentB, key= lambda x:x[-1])
+            child[:len(best_pB)-1] = best_pB[:-1]
+            p2genes = [gene for gene in parentA if gene not in child]
+            child[len(best_pB)-1:] = p2genes
+            child = mutate(child)
+            cost = solution_cost(split_route(child))
+            child.append(cost['total_cost'])
+            childs.append(child)
+        index +=1
     return childs
     
 # Mutate a solution by swapping two customers
@@ -178,21 +236,15 @@ def mutate(solution):
         solution[idx1], solution[idx2] = solution[idx2], solution[idx1]
     return solution
 
-def generate_newgeneration(parent_generation,remain_ratio):
+def generate_newgeneration(parent_generation,retention_rate):
     new_generation = []
     origin_goal_len = len(parent_generation)
-    pop_num = int((origin_goal_len) * remain_ratio)
+    pop_num = int((origin_goal_len) * retention_rate)
     for _ in range(0,pop_num):
         elite_child = min(parent_generation, key  = lambda x: x[-1])
         elite_index = parent_generation.index(elite_child)
         del parent_generation[elite_index]
         new_generation.append(elite_child)
-    goal_len = len(parent_generation)
-    if goal_len % 2 == 1:
-            elite_child = min(parent_generation, key  = lambda x: x[-1])
-            elite_index = parent_generation.index(elite_child)
-            del parent_generation[elite_index]
-            new_generation.append(elite_child)
     list_parent = sorted(parent_generation, key = lambda x: x[-1])
     cut = int((len(parent_generation))/2)
     list_parent = list_parent[:cut]
@@ -206,7 +258,7 @@ def generate_newgeneration(parent_generation,remain_ratio):
         new_routes = [route1,route2]
         #crossover two parent
         if random.random() <= pcv:
-            new_routes = crossover(route1,route2)
+            new_routes = heuristic_crossover(route1,route2)
         new_generation.extend(new_routes)
     return new_generation 
 
@@ -216,21 +268,20 @@ def genetic_algorithm():
     population = generate_population(vehicle_capacity,customers,population_size)
     bestP = min(population, key= lambda x:x[-1])
     fitness_list.append(bestP[-1])
-    gene = 0
+    total_value = solution_cost(split_route(bestP[:-1]))
+    chart_punish.append(total_value['punish'])
+    chart_wait.append(total_value['wait'])
     for _ in range(generations):
-        # print(gene)
-        # print(population)
-        # print(f'length of parent: {len(population)}')
-        # print("----------------------------------------------------------------")
         new_gen = generate_newgeneration(population,0.2)
-        # print(new_gen)
-        # print(f'length of child: {len(new_gen)}')
         bestG = min(new_gen, key= lambda x:x[-1])
         fitness_list.append(bestG[-1])
+        total_value = solution_cost(split_route(bestG[:-1]))
+        chart_punish.append(total_value['punish'])
+        chart_wait.append(total_value['wait'])
         population = new_gen
-        gene += 1
     best_solution = min(population, key= lambda x:x[-1])
     return best_solution
+
 def caculate_capacity(route):
     sum_demand = 0
     sum_demand = sum(customers[cus][3] for cus in route)
@@ -243,8 +294,6 @@ def run_program():
     best_solution = best_solution[:-1]
     result = split_route(best_solution)
     fn_route_cost = solution_cost(result)
-    print(best_solution)
-    print("----------------------------------------------------------------")
     for i in range(0, len(result)):
         print(f"Route {i + 1}:", result[i])
         cap = caculate_capacity(result[i])
@@ -262,34 +311,21 @@ def run_program():
     print(f"population in generations {generations} is {ratio}% better than the origin one")
     print(f"total_demand {total_demand} ")
     plt.plot(fitness_list)
+    plt.plot(fitness_list, label='total_cost')
+    plt.plot(chart_punish, label='punish')
+    plt.plot(chart_wait, label='wait')
     # Add labels and a title
     plt.xlabel("Generation")
     plt.ylabel("Total cost")
-    plt.title("Line chart of total cost on each generation")
-
+    plt.title("Line chart of total cost per generation")
+    plt.legend()
     plt.savefig('output.png')
     return 0
 
 if __name__ == "__main__":
     start = datetime.datetime.now()
-    # max_execution_time = 60  # Max execution time in seconds
-    # while True:
-    #     process = multiprocessing.Process(target=run_program)
-    #     start_time = datetime.datetime.now()
-    #     process.start()
-        
-    #     process.join(max_execution_time)  # Wait for the process to complete or timeout
-        
-    #     elapsed_time = (datetime.datetime.now() - start_time).total_seconds()
-    #     if elapsed_time >= max_execution_time:
-    #         print("Execution time limit reached. Terminating the process.")
-    #         process.terminate()
-    #         process.join()  # Wait for the process to terminate
-    #     else:
-    #         print("Execution completed within the time limit.")
-            # processtime = datetime.datetime.now() - start
-            # print(f"process time: {processtime}")
-            # sys.exit()
     run_program()
     processtime = datetime.datetime.now() - start
     print(f"process time: {processtime}")
+
+
