@@ -35,7 +35,6 @@ for line in lines[1:end_point_data]:  # Skip the header line
     cord_data.append(list_cord)
     customers[cust_no] = (cust_no,xcoord, ycoord, demand, ready_time, due_date, service_time)
 
-# print(max(customers.values(), key= lambda x:x[4]))
 
 # num_vehicles = 10
 vehicle_capacity = 200
@@ -44,7 +43,8 @@ generations = 100
 mutation_rate = 0.01
 pcv = 0.8
 
-
+pr_best_pA = -1
+pr_best_pB = -1
 fitness_list = []
 chart_punish = []
 chart_wait = []
@@ -200,45 +200,71 @@ def heuristic_crossover(parentA, parentB):
     split_parentA = calculate_split_cost(split_route(parentA))
     split_parentB = calculate_split_cost(split_route(parentB))
     index = 0
+    global pr_best_pA
+    global pr_best_pB
     for _ in range(0,2):
         if index == 0:
             child = [0] * len(parentA)
-            while True:
-                best_pA = min(split_parentA, key= lambda x:x[-1])
-                if len(best_pA) == 2:
-                    split_parentA.remove(best_pA)
+            best_pA = min(split_parentA, key= lambda x:x[-1])
+            c_best_pA = best_pA[-1]
+            if pr_best_pA <= c_best_pA:
+                positions = random.sample(range(0,len(parentA)), 2)
+                positions.sort()
+                child[positions[0]:positions[1]] = parentA[positions[0]:positions[1]]
+                p2genes = [gene for gene in parentB if gene not in child]
+                child[:positions[0]] = p2genes[:positions[0]]
+                child[positions[1]:] = p2genes[positions[0]:]
+                child = heuristic_scramble_mutation(child)
+                cost = solution_cost(split_route(child))
+                child.append(cost['total_cost'])
+                childs.append(child)
+            else:
+                best_pA = best_pA[:-1]
+                positionA1 = parentA.index(best_pA[0])
+                positionA2 = parentA.index(best_pA[-1])
+                if positionA1 == positionA2:
+                    child[positionA1] = best_pA[0]
                 else:
-                    break
-            best_pA = best_pA[:-1]
-            positionA1 = parentA.index(best_pA[0])
-            positionA2 = parentA.index(best_pA[-1])
-            child[positionA1:positionA2] = best_pA
-            p2genesA = [gene for gene in parentB if gene not in child] 
-            child[:positionA1] = p2genesA[:positionA1]
-            child[positionA2 + 1:] = p2genesA[positionA1:]
-            child = heuristic_scramble_mutation(child)
-            cost = solution_cost(split_route(child))
-            child.append(cost['total_cost'])
-            childs.append(child)
+                    child[positionA1:positionA2] = best_pA
+                p2genesA = [gene for gene in parentB if gene not in child] 
+                child[:positionA1] = p2genesA[:positionA1]
+                child[positionA2 + 1:] = p2genesA[positionA1:]
+                child = heuristic_scramble_mutation(child)
+                cost = solution_cost(split_route(child))
+                child.append(cost['total_cost'])
+                childs.append(child)
+            pr_best_pA = c_best_pA
         else:
             child = [0] * len(parentB)
-            while True:
-                best_pB = min(split_parentB, key= lambda x:x[-1])
-                if len(best_pB) == 2:
-                    split_parentB.remove(best_pB)
+            best_pB = min(split_parentB, key= lambda x:x[-1])
+            c_best_pB = best_pB[-1]
+            if pr_best_pB <= c_best_pB:
+                positions = random.sample(range(0,len(parentB)), 2)
+                positions.sort()
+                child[positions[0]:positions[1]] = parentB[positions[0]:positions[1]]
+                p2genes = [gene for gene in parentA if gene not in child]
+                child[:positions[0]] = p2genes[:positions[0]]
+                child[positions[1]:] = p2genes[positions[0]:]
+                child = heuristic_scramble_mutation(child)
+                cost = solution_cost(split_route(child))
+                child.append(cost['total_cost'])
+                childs.append(child)
+            else:
+                best_pB = best_pB[:-1]
+                positionB1 = parentB.index(best_pB[0])
+                positionB2 = parentB.index(best_pB[-1])
+                if positionB1 == positionB2:
+                    child[positionB1] = best_pB[0]
                 else:
-                    break
-            best_pB = best_pB[:-1]
-            positionB1 = parentB.index(best_pB[0])
-            positionB2 = parentB.index(best_pB[-1])
-            child[positionB1:positionB2] = best_pB
-            p2genesB = [gene for gene in parentA if gene not in child]
-            child[:positionB1] = p2genesB[:positionB1]
-            child[positionB2 + 1:] = p2genesB[positionB1:]
-            child = heuristic_scramble_mutation(child)
-            cost = solution_cost(split_route(child))
-            child.append(cost['total_cost'])
-            childs.append(child)
+                    child[positionB1:positionB2] = best_pB
+                p2genesB = [gene for gene in parentA if gene not in child]
+                child[:positionB1] = p2genesB[:positionB1]
+                child[positionB2 + 1:] = p2genesB[positionB1:]
+                child = heuristic_scramble_mutation(child)
+                cost = solution_cost(split_route(child))
+                child.append(cost['total_cost'])
+                childs.append(child)
+            pr_best_pB = c_best_pB
         index +=1
     return childs
     
@@ -317,6 +343,7 @@ def run_program():
     best_solution = genetic_algorithm()
     total_cost = best_solution[-1]
     best_solution = best_solution[:-1]
+    print(best_solution)
     result = split_route(best_solution)
     fn_route_cost = solution_cost(result)
     for i in range(0, len(result)):
