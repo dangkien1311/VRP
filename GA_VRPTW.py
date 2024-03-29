@@ -1,4 +1,5 @@
 import csv
+from itertools import zip_longest
 import math
 import multiprocessing
 import os
@@ -214,7 +215,7 @@ def heuristic_crossover(parentA, parentB):
                 p2genes = [gene for gene in parentB if gene not in child]
                 child[:positions[0]] = p2genes[:positions[0]]
                 child[positions[1]:] = p2genes[positions[0]:]
-                child = heuristic_scramble_mutation(child)
+                child = mutate(child)
                 cost = solution_cost(split_route(child))
                 child.append(cost['total_cost'])
                 childs.append(child)
@@ -229,7 +230,7 @@ def heuristic_crossover(parentA, parentB):
                 p2genesA = [gene for gene in parentB if gene not in child] 
                 child[:positionA1] = p2genesA[:positionA1]
                 child[positionA2 + 1:] = p2genesA[positionA1:]
-                child = heuristic_scramble_mutation(child)
+                child = mutate(child)
                 cost = solution_cost(split_route(child))
                 child.append(cost['total_cost'])
                 childs.append(child)
@@ -245,7 +246,7 @@ def heuristic_crossover(parentA, parentB):
                 p2genes = [gene for gene in parentA if gene not in child]
                 child[:positions[0]] = p2genes[:positions[0]]
                 child[positions[1]:] = p2genes[positions[0]:]
-                child = heuristic_scramble_mutation(child)
+                child = mutate(child)
                 cost = solution_cost(split_route(child))
                 child.append(cost['total_cost'])
                 childs.append(child)
@@ -260,7 +261,7 @@ def heuristic_crossover(parentA, parentB):
                 p2genesB = [gene for gene in parentA if gene not in child]
                 child[:positionB1] = p2genesB[:positionB1]
                 child[positionB2 + 1:] = p2genesB[positionB1:]
-                child = heuristic_scramble_mutation(child)
+                child = mutate(child)
                 cost = solution_cost(split_route(child))
                 child.append(cost['total_cost'])
                 childs.append(child)
@@ -271,8 +272,10 @@ def heuristic_crossover(parentA, parentB):
 # Mutate a solution by swapping two customers
 def mutate(solution):
     if random.random() < mutation_rate:
-        idx1, idx2 = random.sample(range(len(solution)), 2)
-        solution[idx1], solution[idx2] = solution[idx2], solution[idx1]
+        position = random.randint(0,len(solution))
+        # solution = [elem for pair in zip_longest(solution[:position], solution[position:]) for elem in pair if elem is not None]
+        solution[:position] =  solution[:position][::-1]
+        solution[position:] =  solution[position:][::-1]
     return solution
 
 def heuristic_scramble_mutation(solution):
@@ -322,14 +325,18 @@ def genetic_algorithm():
     total_value = solution_cost(split_route(bestP[:-1]))
     chart_punish.append(total_value['punish'])
     chart_wait.append(total_value['wait'])
+    i = 1
     for _ in range(generations):
-        new_gen = generate_newgeneration(population,0.2)
+        if i % 10 == 0:
+            print(f"{i}%")
+        new_gen = generate_newgeneration(population,0.1)
         bestG = min(new_gen, key= lambda x:x[-1])
         fitness_list.append(bestG[-1])
         total_value = solution_cost(split_route(bestG[:-1]))
         chart_punish.append(total_value['punish'])
         chart_wait.append(total_value['wait'])
         population = new_gen
+        i += 1
     best_solution = min(population, key= lambda x:x[-1])
     return best_solution
 
