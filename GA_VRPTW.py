@@ -17,7 +17,7 @@ with open('data.txt', 'r') as file:
 
 # Initialize the customers dictionary
 customers = {}
-num_customers = 200
+num_customers = 100
 end_point_data = num_customers + 2
 cord_data = []
 # Process each line and create the dictionary entries
@@ -39,10 +39,11 @@ for line in lines[1:end_point_data]:  # Skip the header line
 
 # num_vehicles = 10
 vehicle_capacity = 200
-population_size = 100
-generations = 100
-mutation_rate = 0.01
-pcv = 0.8
+population_size = 500
+generations = 2500
+mutation_rate = 0.2
+pcv = 0.75
+time_window_deviation = 500
 
 pr_best_pA = -1
 pr_best_pB = -1
@@ -69,7 +70,7 @@ def split_route(route):
             service_time = customers[i][4]
         if service_time != 0:
             service_time = service_time + customers[cus_before][6] + calculate_distance(customers[i],customers[cus_before])
-        if total_demand + customers[i][3] <= vehicle_capacity and (service_time >= (customers[i][4] - 500) and service_time <= (customers[i][5] + 500)):
+        if total_demand + customers[i][3] <= vehicle_capacity and (service_time >= (customers[i][4] - time_window_deviation) and service_time <= (customers[i][5] + time_window_deviation)):
             current_group.append(i)
             total_demand += customers[i][3]
         else:
@@ -139,7 +140,7 @@ def generate_population(capacity,set_customer,population_size):
                 if service_time == 0 :
                     # service_time = random.randint(customer_values[4],customer_values[5])
                     service_time = customer_values[4]
-                if customer_values[3] <= capacity_value and (service_time >= (customer_values[4] - 500) and service_time <= (customer_values[5] + 500)):
+                if customer_values[3] <= capacity_value and (service_time >= (customer_values[4] - time_window_deviation) and service_time <= (customer_values[5] + time_window_deviation)):
                     filtered_customers.append(customer_id)
                     capacity_value -= customer_values[3]
                 cus_before = customer_values
@@ -208,7 +209,7 @@ def heuristic_crossover(parentA, parentB):
             child = [0] * len(parentA)
             best_pA = min(split_parentA, key= lambda x:x[-1])
             c_best_pA = best_pA[-1]
-            if pr_best_pA <= c_best_pA:
+            if pr_best_pA >= c_best_pA:
                 positions = random.sample(range(0,len(parentA)), 2)
                 positions.sort()
                 child[positions[0]:positions[1]] = parentA[positions[0]:positions[1]]
@@ -239,7 +240,7 @@ def heuristic_crossover(parentA, parentB):
             child = [0] * len(parentB)
             best_pB = min(split_parentB, key= lambda x:x[-1])
             c_best_pB = best_pB[-1]
-            if pr_best_pB <= c_best_pB:
+            if pr_best_pB >= c_best_pB:
                 positions = random.sample(range(0,len(parentB)), 2)
                 positions.sort()
                 child[positions[0]:positions[1]] = parentB[positions[0]:positions[1]]
@@ -290,10 +291,10 @@ def heuristic_scramble_mutation(solution):
     return solution
 
 
-def generate_newgeneration(parent_generation,retention_rate):
+def generate_newgeneration(parent_generation,preservation_rate):
     new_generation = []
     origin_goal_len = len(parent_generation)
-    pop_num = int((origin_goal_len) * retention_rate)
+    pop_num = int((origin_goal_len) * preservation_rate)
     for _ in range(0,pop_num):
         elite_child = min(parent_generation, key  = lambda x: x[-1])
         elite_index = parent_generation.index(elite_child)
@@ -303,8 +304,6 @@ def generate_newgeneration(parent_generation,retention_rate):
     cut = int((len(parent_generation))/2)
     list_parent = list_parent[:cut]
     while True:
-        if len(new_generation) == origin_goal_len:
-            break
         #get random two parent
         index = random.sample(range(0,len(list_parent)),2)
         route1 = list_parent[index[0]]
@@ -313,7 +312,12 @@ def generate_newgeneration(parent_generation,retention_rate):
         #crossover two parent
         if random.random() <= pcv:
             new_routes = heuristic_crossover(route1,route2)
-        new_generation.extend(new_routes)
+        new_generation.append(new_routes[0])
+        if len(new_generation) == origin_goal_len:
+            break
+        new_generation.append(new_routes[1])
+        if len(new_generation) == origin_goal_len:
+            break
     return new_generation 
 
         
@@ -327,8 +331,9 @@ def genetic_algorithm():
     chart_wait.append(total_value['wait'])
     i = 1
     for _ in range(generations):
-        if i % 10 == 0:
-            print(f"{i}%")
+        p = (i/generations) * 100
+        if p % 10 == 0:
+            print(f"{int(p)}%")
         new_gen = generate_newgeneration(population,0.1)
         bestG = min(new_gen, key= lambda x:x[-1])
         fitness_list.append(bestG[-1])
@@ -367,7 +372,7 @@ def run_program():
     print(f"Total wait: {fn_route_cost['wait']}")
     print(f"Total punish: {fn_route_cost['punish']}")
     ratio = round((1 - ((total_cost)/fitness_list[0])) * 100,2)
-    print(f"population in generations {generations} is {ratio}% better than the origin one")
+    print(f"population in generations {generations} is {ratio}% better than the original one")
     print(f"total_demand {total_demand} ")
     plt.plot(fitness_list)
     plt.plot(fitness_list, label='total_cost')
