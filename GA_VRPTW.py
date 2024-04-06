@@ -12,7 +12,7 @@ from sklearn.cluster import KMeans
 import time
 import sys
 
-with open('data.txt', 'r') as file:
+with open('solomon_data.txt', 'r') as file:
     lines = file.readlines()
 
 # Initialize the customers dictionary
@@ -41,16 +41,24 @@ for line in lines[1:end_point_data]:  # Skip the header line
 vehicle_capacity = 200
 population_size = 500
 generations = 2500
-mutation_rate = 0.2
-pcv = 0.75
-time_window_deviation = 500
+mutation_rate = 0.07
+pcv = 0.8
+time_window_deviation = 50
 
 pr_best_pA = -1
 pr_best_pB = -1
-fitness_list = []
-chart_punish = []
-chart_wait = []
+fitness_list = {}
+chart_punish = {}
+chart_wait = {}
 
+num_clusters = 4
+kmeans = KMeans(n_clusters=num_clusters)
+clus  = kmeans.fit(cord_data)
+centroids = kmeans.cluster_centers_
+clustered_data = [{} for _ in range(num_clusters)]
+for i, label in enumerate(kmeans.labels_):
+    if i != 0:
+        clustered_data[label][i] = customers[i]
 
 def calculate_distance(coord1, coord2):
     x_diff = coord1[1] - coord2[1]
@@ -272,12 +280,33 @@ def heuristic_crossover(parentA, parentB):
     
 # Mutate a solution by swapping two customers
 def mutate(solution):
+    mutated_child = solution
     if random.random() < mutation_rate:
-        position = random.randint(0,len(solution))
+        # position = random.randint(0,len(solution))
         # solution = [elem for pair in zip_longest(solution[:position], solution[position:]) for elem in pair if elem is not None]
-        solution[:position] =  solution[:position][::-1]
-        solution[position:] =  solution[position:][::-1]
-    return solution
+        ##CIM
+        # solution[:position] =  solution[:position][::-1]
+        # solution[position:] =  solution[position:][::-1]
+        ##swap
+        # for i in range(len(solution)):
+        #     swap_index1 = random.randint(0, len(solution) - 1)
+        #     swap_index2 = random.randint(0, len(solution) - 1)
+        #     solution[swap_index1], solution[swap_index2] = solution[swap_index2], solution[swap_index1]
+        ## swap segment
+        positions = random.sample(range(0,len(solution)), 4)
+        positions.sort()
+        mutated_child = []
+        lst_1 = solution[:positions[0]]
+        swap1 = solution[positions[0]:positions[1]]
+        lst_2 = solution[positions[1]:positions[2]]
+        swap2 = solution[positions[2]:positions[3]]
+        lst_3 = solution[positions[3]:]
+        mutated_child.extend(lst_1)
+        mutated_child.extend(swap2)
+        mutated_child.extend(lst_2)
+        mutated_child.extend(swap1)
+        mutated_child.extend(lst_3)
+    return mutated_child
 
 def heuristic_scramble_mutation(solution):
     if random.random() < mutation_rate:
@@ -323,27 +352,34 @@ def generate_newgeneration(parent_generation,preservation_rate):
         
 # Main genetic algorithm loop
 def genetic_algorithm():
-    population = generate_population(vehicle_capacity,customers,population_size)
-    bestP = min(population, key= lambda x:x[-1])
-    fitness_list.append(bestP[-1])
-    total_value = solution_cost(split_route(bestP[:-1]))
-    chart_punish.append(total_value['punish'])
-    chart_wait.append(total_value['wait'])
-    i = 1
-    for _ in range(generations):
-        p = (i/generations) * 100
-        if p % 10 == 0:
-            print(f"{int(p)}%")
-        new_gen = generate_newgeneration(population,0.1)
-        bestG = min(new_gen, key= lambda x:x[-1])
-        fitness_list.append(bestG[-1])
-        total_value = solution_cost(split_route(bestG[:-1]))
-        chart_punish.append(total_value['punish'])
-        chart_wait.append(total_value['wait'])
-        population = new_gen
-        i += 1
-    best_solution = min(population, key= lambda x:x[-1])
-    return best_solution
+    fn_solution = []
+    for lab,pop in enumerate(clustered_data):
+        fitness_list[lab] = []
+        chart_punish[lab] = [] 
+        chart_wait[lab] = []
+        population = generate_population(vehicle_capacity,pop,population_size)
+        bestP = min(population, key= lambda x:x[-1])
+        fitness_list[lab].append(bestP[-1])
+        total_value = solution_cost(split_route(bestP[:-1]))
+        chart_punish[lab].append(total_value['punish'])
+        chart_wait[lab].append(total_value['wait'])
+        i = 1
+        print(f'cluster: {lab}')
+        for _ in range(generations):
+            p = (i/generations) * 100
+            if p % 10 == 0:
+                print(f"{int(p)}%")
+            new_gen = generate_newgeneration(population,0.1)
+            bestG = min(new_gen, key= lambda x:x[-1])
+            fitness_list[lab].append(bestG[-1])
+            total_value = solution_cost(split_route(bestG[:-1]))
+            chart_punish[lab].append(total_value['punish'])
+            chart_wait[lab].append(total_value['wait'])
+            population = new_gen
+            i += 1
+        best_solution = min(population, key= lambda x:x[-1])
+        fn_solution.append(best_solution)
+    return fn_solution
 
 def caculate_capacity(route):
     sum_demand = 0
@@ -351,39 +387,47 @@ def caculate_capacity(route):
     return sum_demand
 
 def run_program():
+    fn_cost = 0
+    fn_number_route = 0
     total_demand = 0
     best_solution = genetic_algorithm()
-    total_cost = best_solution[-1]
-    best_solution = best_solution[:-1]
-    print(best_solution)
-    result = split_route(best_solution)
-    fn_route_cost = solution_cost(result)
-    for i in range(0, len(result)):
-        print(f"Route {i + 1}:", result[i])
-        cap = caculate_capacity(result[i])
-        print(f"capacity of route {i + 1}: {cap}")
-        total_demand += cap
-        route_cost = solution_cost([result[i]])
-        print(f"Cost for route {i + 1}:", route_cost['total_cost'])
-        print(f"wait for route {i + 1}:", route_cost['wait'])
-        print(f"punish for route {i + 1}:", route_cost['punish'])
-        print("----------------------------------------------------------------")
-    print(f"Total cost: {total_cost}")
-    print(f"Total wait: {fn_route_cost['wait']}")
-    print(f"Total punish: {fn_route_cost['punish']}")
-    ratio = round((1 - ((total_cost)/fitness_list[0])) * 100,2)
-    print(f"population in generations {generations} is {ratio}% better than the original one")
-    print(f"total_demand {total_demand} ")
-    plt.plot(fitness_list)
-    plt.plot(fitness_list, label='total_cost')
-    plt.plot(chart_punish, label='punish')
-    plt.plot(chart_wait, label='wait')
-    # Add labels and a title
-    plt.xlabel("Generation")
-    plt.ylabel("Total cost")
-    plt.title("Line chart of total cost per generation")
-    plt.legend()
-    plt.savefig('output.png')
+    for lab,ebest in enumerate(best_solution):
+        total_cost = ebest[-1]
+        fn_cost += total_cost
+        ebest = ebest[:-1]
+        print(f'optimization for cluster {lab} : {ebest}')
+        result = split_route(ebest)
+        fn_route_cost = solution_cost(result)
+        fn_number_route += len(result)
+        for i in range(0, len(result)):
+            print(f"Route {i + 1}:", result[i])
+            cap = caculate_capacity(result[i])
+            print(f"capacity of route {i + 1}: {cap}")
+            total_demand += cap
+            route_cost = solution_cost([result[i]])
+            print(f"Cost for route {i + 1}:", route_cost['total_cost'])
+            print(f"wait for route {i + 1}:", route_cost['wait'])
+            print(f"punish for route {i + 1}:", route_cost['punish'])
+            print("----------------------------------------------------------------")
+        print(f"Total cost: {total_cost}")
+        print(f"Total wait: {fn_route_cost['wait']}")
+        print(f"Total punish: {fn_route_cost['punish']}")
+        ratio = round((1 - ((total_cost)/fitness_list[lab][0])) * 100,2)
+        print(f"population in generations {generations} is {ratio}% better than the original one")
+        print(f"total_demand {total_demand} ")
+        plt.plot(fitness_list[lab])
+        plt.plot(fitness_list[lab], label='total_cost')
+        plt.plot(chart_punish[lab], label='punish')
+        plt.plot(chart_wait[lab], label='wait')
+        # Add labels and a title
+        plt.xlabel("Generation")
+        plt.ylabel("Total cost")
+        plt.title("Line chart of total cost per generation")
+        plt.legend()
+        plt.savefig(f'output{lab}.png')
+        plt.close()
+    print(f'Cost of all route: {fn_cost}')
+    print(f'total route: {fn_number_route}')
     return 0
 
 if __name__ == "__main__":
