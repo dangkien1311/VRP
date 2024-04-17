@@ -17,7 +17,7 @@ with open('solomon_data.txt', 'r') as file:
 
 # Initialize the customers dictionary
 customers = {}
-num_customers = 100
+num_customers = 400
 end_point_data = num_customers + 2
 cord_data = []
 # Process each line and create the dictionary entries
@@ -39,11 +39,11 @@ for line in lines[1:end_point_data]:  # Skip the header line
 
 # num_vehicles = 10
 vehicle_capacity = 200
-population_size = 500
-generations = 2500
-mutation_rate = 0.07
+population_size = 2500
+generations = 3500
+mutation_rate = 0.15
 pcv = 0.8
-time_window_deviation = 50
+time_window_deviation = 250
 
 pr_best_pA = -1
 pr_best_pB = -1
@@ -51,7 +51,7 @@ fitness_list = {}
 chart_punish = {}
 chart_wait = {}
 
-num_clusters = 4
+num_clusters = 5
 kmeans = KMeans(n_clusters=num_clusters)
 clus  = kmeans.fit(cord_data)
 centroids = kmeans.cluster_centers_
@@ -73,11 +73,10 @@ def split_route(route):
     service_time = 0
     cus_before = 0
     for i in route:
-        if service_time == 0:
-            # service_time = random.randint(customers[i][4],customers[i][5])
-            service_time = customers[i][4]
         if service_time != 0:
             service_time = service_time + customers[cus_before][6] + calculate_distance(customers[i],customers[cus_before])
+        if service_time == 0:
+            service_time = customers[i][4]
         if total_demand + customers[i][3] <= vehicle_capacity and (service_time >= (customers[i][4] - time_window_deviation) and service_time <= (customers[i][5] + time_window_deviation)):
             current_group.append(i)
             total_demand += customers[i][3]
@@ -104,7 +103,6 @@ def solution_cost(solution):
             if service_time != 0:
                 service_time = service_time + customers[cus_before][6] + calculate_distance(customers[cust],customers[cus_before])
             if service_time == 0 :
-                # service_time = random.randint(customers[cust][4],customers[cust][5])
                 service_time = customers[cust][4]
             if service_time < customers[cust][4]:
                 wait += (customers[cust][4] - service_time)
@@ -136,9 +134,6 @@ def generate_population(capacity,set_customer,population_size):
             keys_to_shuffle = [key for key,value in set_customer.items() if key not in customers_to_remove_set]
             random.shuffle(keys_to_shuffle)
             lst_filtered_cust = {key: set_customer[key] for key in keys_to_shuffle if key != 0}
-            # if len(lst_filtered_cust) == 1:
-            #     list_filtered_route = []
-            #     continue
             if len(lst_filtered_cust) == 0:
                 route_list.extend(list_filtered_route)
                 break
@@ -146,7 +141,6 @@ def generate_population(capacity,set_customer,population_size):
                 if service_time != 0:
                     service_time = service_time + cus_before[6] + calculate_distance(customer_values,cus_before)
                 if service_time == 0 :
-                    # service_time = random.randint(customer_values[4],customer_values[5])
                     service_time = customer_values[4]
                 if customer_values[3] <= capacity_value and (service_time >= (customer_values[4] - time_window_deviation) and service_time <= (customer_values[5] + time_window_deviation)):
                     filtered_customers.append(customer_id)
@@ -390,10 +384,12 @@ def run_program():
     fn_cost = 0
     fn_number_route = 0
     total_demand = 0
+    initial_cost = 0
     best_solution = genetic_algorithm()
     for lab,ebest in enumerate(best_solution):
         total_cost = ebest[-1]
         fn_cost += total_cost
+        initial_cost += fitness_list[lab][0]
         ebest = ebest[:-1]
         print(f'optimization for cluster {lab} : {ebest}')
         result = split_route(ebest)
@@ -424,10 +420,14 @@ def run_program():
         plt.ylabel("Total cost")
         plt.title("Line chart of total cost per generation")
         plt.legend()
-        plt.savefig(f'output{lab}.png')
+        plt.savefig(f'D:\Logistics\code\Output\output{lab}.png')
         plt.close()
+    print("----------------------------------------------------------------")
+    print(f'Initial Cost of all route: {initial_cost}')
     print(f'Cost of all route: {fn_cost}')
     print(f'total route: {fn_number_route}')
+    fn_ratio = round((1 - (fn_cost/initial_cost)) * 100,2)
+    print(f"final population is {fn_ratio}% better than the original one")
     return 0
 
 if __name__ == "__main__":

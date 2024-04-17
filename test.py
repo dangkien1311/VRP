@@ -5,13 +5,13 @@ import random
 from itertools import zip_longest
 
 # Tạo dữ liệu mẫu
-with open('data.txt', 'r') as file:
+with open('solomon_data.txt', 'r') as file:
     lines = file.readlines()
 
 total_demand = 0
 cord_data = []
 # Process each line and create the dictionary entries
-for line in lines[2:102]:  # Skip the header line
+for line in lines[1:202]:  # Skip the header line
     list_cord = []
     data = line.strip().split(',')
     cust_no = int(data[0])
@@ -22,16 +22,13 @@ for line in lines[2:102]:  # Skip the header line
     ready_time = int(data[4])
     due_date = int(data[5])
     service_time = int(data[6])
-    list_cord.append(xcoord)
-    list_cord.append(ycoord)
+    list_cord.append(ready_time)
+    list_cord.append(due_date)
     cord_data.append(list_cord)
     
-num_clusters = 3
-# Xây dựng mô hình K-Means với n cụm
+num_clusters = 10
 kmeans = KMeans(n_clusters=num_clusters)
-# Thực hiện gom cụm dữ liệu
 clus  = kmeans.fit(cord_data)
-# Lấy vị trí của các trung tâm cụm
 centroids = kmeans.cluster_centers_
 
 clustered_data = [[] for _ in range(num_clusters)]
@@ -39,19 +36,18 @@ clustered_data = [[] for _ in range(num_clusters)]
 print(kmeans.labels_)
 
 for i, label in enumerate(kmeans.labels_):
-    clustered_data[label].append(i+1)
-print(clustered_data[1])
-# Hiển thị kết quả
-for i, cluster in enumerate(clustered_data):
-    print(f"Cụm {i+1}:")
-    print(centroids[i])
-    for point in cluster:
-        print(point)
-    print()
+    clustered_data[label].append(cord_data[i])
+
+# for i, cluster in enumerate(clustered_data):
+#     print(f"Cụm {i+1}:")
+#     print(centroids[i])
+#     for point in cluster:
+#         print(point)
+#     print()
 
 plt.figure(figsize=(12, 8))
 
-for cluster, color in zip([clustered_data[0], clustered_data[1],clustered_data[2],[[40,50]]], ['r', 'g', 'b','m']):
+for cluster, color in zip([clustered_data[0], clustered_data[1],clustered_data[2],clustered_data[3],clustered_data[4],clustered_data[5],clustered_data[6],clustered_data[7],clustered_data[8],clustered_data[9],[[70,70]]], ['red', 'brown', 'blue','green','orange','purple','olive','tan','maroon','yellow','black']):
     data = list(zip(*cluster))
     plt.scatter(data[0], data[1], c=color, label=f'Cluster {color}')
 
