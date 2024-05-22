@@ -1,30 +1,26 @@
-import csv
-from itertools import zip_longest
+import logging
 import math
-import multiprocessing
-import os
 import random
-import threading
-import numpy as np
 import datetime
 import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
-import time
-import sys
 
-with open('solomon_data.txt', 'r') as file:
+file_path = 'input.txt' 
+with open(file_path, 'r') as file:
     lines = file.readlines()
+logging.basicConfig(filename='terminal_output.log', level=logging.INFO)
 
 # Initialize the customers dictionary
 customers = {}
-num_customers = 400
+num_customers = 100
 end_point_data = num_customers + 2
 cord_data = []
+cust_index = 0
 # Process each line and create the dictionary entries
 for line in lines[1:end_point_data]:  # Skip the header line
     list_cord = []
-    data = line.strip().split(',')
-    cust_no = int(data[0])
+    data = line.strip().split()
+    cust_no = cust_index
     xcoord = int(data[1])
     ycoord = int(data[2])
     demand = int(data[3])
@@ -35,15 +31,15 @@ for line in lines[1:end_point_data]:  # Skip the header line
     list_cord.append(ycoord)
     cord_data.append(list_cord)
     customers[cust_no] = (cust_no,xcoord, ycoord, demand, ready_time, due_date, service_time)
-
+    cust_index += 1
 
 # num_vehicles = 10
 vehicle_capacity = 200
-population_size = 2500
-generations = 3500
+population_size = 100
+generations = 250
 mutation_rate = 0.15
 pcv = 0.8
-time_window_deviation = 250
+time_window_deviation = 50
 
 pr_best_pA = -1
 pr_best_pB = -1
@@ -51,7 +47,7 @@ fitness_list = {}
 chart_punish = {}
 chart_wait = {}
 
-num_clusters = 5
+num_clusters = 4
 kmeans = KMeans(n_clusters=num_clusters)
 clus  = kmeans.fit(cord_data)
 centroids = kmeans.cluster_centers_
@@ -122,8 +118,6 @@ def solution_cost(solution):
 def generate_population(capacity,set_customer,population_size):
     population = []
     for _ in range(population_size):
-        wait = 0
-        punish = 0
         route_list = []
         list_filtered_route = []
         while True:
@@ -157,10 +151,10 @@ def generate_population(capacity,set_customer,population_size):
     return population
 
 def calculate_split_cost(parent):
-        for i in parent:
-            cost_i = solution_cost([i])
-            i.append(cost_i['total_cost'])
-        return parent
+    for i in parent:
+        cost_i = solution_cost([i])
+        i.append(cost_i['total_cost'])
+    return parent
 
 # OX crossover need repair
 def crossover(parentA, parentB):
@@ -177,7 +171,7 @@ def crossover(parentA, parentB):
             p2genes = [gene for gene in parentB if gene not in child]
             child[:positions[0]] = p2genes[:positions[0]]
             child[positions[1]:] = p2genes[positions[0]:]
-            child = heuristic_scramble_mutation(child)
+            child = mutate(child)
             cost = solution_cost(split_route(child))
             child.append(cost['total_cost'])
             childs.append(child)
@@ -189,7 +183,7 @@ def crossover(parentA, parentB):
             p2genes = [gene for gene in parentA if gene not in child]
             child[:positions[0]] = p2genes[:positions[0]]
             child[positions[1]:] = p2genes[positions[0]:]
-            child = heuristic_scramble_mutation(child)
+            child = mutate(child)
             cost = solution_cost(split_route(child))
             child.append(cost['total_cost'])
             childs.append(child)
@@ -218,7 +212,7 @@ def heuristic_crossover(parentA, parentB):
                 p2genes = [gene for gene in parentB if gene not in child]
                 child[:positions[0]] = p2genes[:positions[0]]
                 child[positions[1]:] = p2genes[positions[0]:]
-                child = mutate(child)
+                child = heuristic_scramble_mutation(child)
                 cost = solution_cost(split_route(child))
                 child.append(cost['total_cost'])
                 childs.append(child)
@@ -233,7 +227,7 @@ def heuristic_crossover(parentA, parentB):
                 p2genesA = [gene for gene in parentB if gene not in child] 
                 child[:positionA1] = p2genesA[:positionA1]
                 child[positionA2 + 1:] = p2genesA[positionA1:]
-                child = mutate(child)
+                child = heuristic_scramble_mutation(child)
                 cost = solution_cost(split_route(child))
                 child.append(cost['total_cost'])
                 childs.append(child)
@@ -249,7 +243,7 @@ def heuristic_crossover(parentA, parentB):
                 p2genes = [gene for gene in parentA if gene not in child]
                 child[:positions[0]] = p2genes[:positions[0]]
                 child[positions[1]:] = p2genes[positions[0]:]
-                child = mutate(child)
+                child = heuristic_scramble_mutation(child)
                 cost = solution_cost(split_route(child))
                 child.append(cost['total_cost'])
                 childs.append(child)
@@ -264,7 +258,7 @@ def heuristic_crossover(parentA, parentB):
                 p2genesB = [gene for gene in parentA if gene not in child]
                 child[:positionB1] = p2genesB[:positionB1]
                 child[positionB2 + 1:] = p2genesB[positionB1:]
-                child = mutate(child)
+                child = heuristic_scramble_mutation(child)
                 cost = solution_cost(split_route(child))
                 child.append(cost['total_cost'])
                 childs.append(child)
@@ -358,12 +352,12 @@ def genetic_algorithm():
         chart_punish[lab].append(total_value['punish'])
         chart_wait[lab].append(total_value['wait'])
         i = 1
-        print(f'cluster: {lab}')
+        logging.info(f'cluster: {lab}')
         for _ in range(generations):
             p = (i/generations) * 100
             if p % 10 == 0:
-                print(f"{int(p)}%")
-            new_gen = generate_newgeneration(population,0.1)
+                logging.info(f"{int(p)}%")
+            new_gen = generate_newgeneration(population,0.2)
             bestG = min(new_gen, key= lambda x:x[-1])
             fitness_list[lab].append(bestG[-1])
             total_value = solution_cost(split_route(bestG[:-1]))
@@ -391,26 +385,26 @@ def run_program():
         fn_cost += total_cost
         initial_cost += fitness_list[lab][0]
         ebest = ebest[:-1]
-        print(f'optimization for cluster {lab} : {ebest}')
+        logging.info(f'optimization for cluster {lab} : {ebest}')
         result = split_route(ebest)
         fn_route_cost = solution_cost(result)
         fn_number_route += len(result)
         for i in range(0, len(result)):
-            print(f"Route {i + 1}:", result[i])
+            logging.info(f"Route {i + 1}: {result[i]}")
             cap = caculate_capacity(result[i])
-            print(f"capacity of route {i + 1}: {cap}")
+            logging.info(f"capacity of route {i + 1}: {cap}")
             total_demand += cap
             route_cost = solution_cost([result[i]])
-            print(f"Cost for route {i + 1}:", route_cost['total_cost'])
-            print(f"wait for route {i + 1}:", route_cost['wait'])
-            print(f"punish for route {i + 1}:", route_cost['punish'])
-            print("----------------------------------------------------------------")
-        print(f"Total cost: {total_cost}")
-        print(f"Total wait: {fn_route_cost['wait']}")
-        print(f"Total punish: {fn_route_cost['punish']}")
+            logging.info(f"Cost for route {i + 1}: {route_cost['total_cost']}")
+            logging.info(f"wait for route {i + 1}: {route_cost['wait']}")
+            logging.info(f"punish for route {i + 1}: {route_cost['punish']}")
+            logging.info("----------------------------------------------------------------")
+        logging.info(f"Total cost: {total_cost}")
+        logging.info(f"Total wait: {fn_route_cost['wait']}")
+        logging.info(f"Total punish: {fn_route_cost['punish']}")
         ratio = round((1 - ((total_cost)/fitness_list[lab][0])) * 100,2)
-        print(f"population in generations {generations} is {ratio}% better than the original one")
-        print(f"total_demand {total_demand} ")
+        logging.info(f"population in generations {generations} is {ratio}% better than the original one")
+        logging.info(f"total_demand {total_demand}")
         plt.plot(fitness_list[lab])
         plt.plot(fitness_list[lab], label='total_cost')
         plt.plot(chart_punish[lab], label='punish')
@@ -420,20 +414,20 @@ def run_program():
         plt.ylabel("Total cost")
         plt.title("Line chart of total cost per generation")
         plt.legend()
-        plt.savefig(f'D:\Logistics\code\Output\output{lab}.png')
+        plt.savefig(f'/media/kiendt/DATA/Logistics/code/Output/output{lab}.png')
         plt.close()
-    print("----------------------------------------------------------------")
-    print(f'Initial Cost of all route: {initial_cost}')
-    print(f'Cost of all route: {fn_cost}')
-    print(f'total route: {fn_number_route}')
+    logging.info("----------------------------------------------------------------")
+    logging.info(f'Initial Cost of all route: {initial_cost}')
+    logging.info(f'Cost of all route: {fn_cost}')
+    logging.info(f'total route: {fn_number_route}')
     fn_ratio = round((1 - (fn_cost/initial_cost)) * 100,2)
-    print(f"final population is {fn_ratio}% better than the original one")
+    logging.info(f"final population is {fn_ratio}% better than the original one")
     return 0
 
 if __name__ == "__main__":
     start = datetime.datetime.now()
     run_program()
     processtime = datetime.datetime.now() - start
-    print(f"process time: {processtime}")
+    logging.info(f"process time: {processtime}")
 
 
