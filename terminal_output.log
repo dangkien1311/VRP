@@ -20,139 +20,249 @@ INFO:root:70%
 INFO:root:80%
 INFO:root:90%
 INFO:root:100%
-INFO:root:cluster: 2
-INFO:root:10%
-INFO:root:20%
-INFO:root:30%
-INFO:root:40%
-INFO:root:50%
-INFO:root:60%
-INFO:root:70%
-INFO:root:80%
-INFO:root:90%
-INFO:root:100%
-INFO:root:cluster: 3
-INFO:root:10%
-INFO:root:20%
-INFO:root:30%
-INFO:root:40%
-INFO:root:50%
-INFO:root:60%
-INFO:root:70%
-INFO:root:80%
-INFO:root:90%
-INFO:root:100%
-INFO:root:optimization for cluster 0 : [76, 30, 24, 80, 3, 1, 50, 28, 29, 78, 66, 65, 34, 20, 79, 77, 70, 51, 81, 9, 68, 12, 35, 71, 33, 69, 27]
-INFO:root:Route 1: [76, 30, 24, 80, 3, 1, 50]
-INFO:root:capacity of route 1: 79
-INFO:root:Cost for route 1: 126.26956675229037
+INFO:root:optimization for cluster 0 : [73, 88, 91, 100, 20, 21, 87, 89, 79, 74, 78, 69, 75, 64, 33, 25, 24, 72, 56, 85, 82, 35, 27, 43, 40, 39, 38, 29, 34, 41, 14, 7, 9, 1, 15, 67, 70, 36, 52, 90, 84, 95, 49, 46, 58, 62, 48, 55, 68, 65, 71, 99, 86, 93, 98, 81, 66, 59, 54, 47, 53, 60, 16, 22, 6, 10, 57, 51, 50, 26, 37, 13, 3, 11, 8, 2, 18, 19, 5, 92, 83, 42, 28]
+INFO:root:Route 1: [73]
+INFO:root:capacity of route 1: 85
+INFO:root:Cost for route 1: 0.007108995088573524
 INFO:root:wait for route 1: 0
 INFO:root:punish for route 1: 0
 INFO:root:----------------------------------------------------------------
-INFO:root:Route 2: [28, 29, 78, 66, 65, 34, 20]
-INFO:root:capacity of route 2: 96
-INFO:root:Cost for route 2: 154.60740780320793
-INFO:root:wait for route 2: 0
-INFO:root:punish for route 2: 0.33003794059368374
-INFO:root:----------------------------------------------------------------
-INFO:root:Route 3: [79, 77, 70, 51, 81, 9, 68]
-INFO:root:capacity of route 3: 130
-INFO:root:Cost for route 3: 128.94737478603457
-INFO:root:wait for route 3: 8.596875762567151
-INFO:root:punish for route 3: 0
-INFO:root:----------------------------------------------------------------
-INFO:root:Route 4: [12, 35, 71, 33, 69, 27]
-INFO:root:capacity of route 4: 75
-INFO:root:Cost for route 4: 104.87871277406875
-INFO:root:wait for route 4: 0
-INFO:root:punish for route 4: 4.9393563870343655
-INFO:root:----------------------------------------------------------------
-INFO:root:Total cost: 514.7030621156016
-INFO:root:Total wait: 8.596875762567151
-INFO:root:Total punish: 5.269394327628049
-INFO:root:population in generations 250 is 26.15% better than the original one
-INFO:root:total_demand 380
-INFO:root:optimization for cluster 1 : [96, 16, 38, 44, 58, 95, 99, 15, 43, 85, 45, 5, 60, 83, 53, 13, 37, 18, 89, 6, 17, 93, 92, 61, 42, 98, 91, 59, 86, 100, 14, 84, 94, 97, 87, 57, 2]
-INFO:root:Route 1: [96, 16, 38, 44, 58]
-INFO:root:capacity of route 1: 82
-INFO:root:Cost for route 1: 108.09154414170257
-INFO:root:wait for route 1: 0
-INFO:root:punish for route 1: 15.520486116683657
-INFO:root:----------------------------------------------------------------
-INFO:root:Route 2: [95, 99, 15, 43, 85, 45, 5, 60, 83]
-INFO:root:capacity of route 2: 141
-INFO:root:Cost for route 2: 170.24618887823593
-INFO:root:wait for route 2: 5.6901537972244505
-INFO:root:punish for route 2: 32.79747161198199
-INFO:root:----------------------------------------------------------------
-INFO:root:Route 3: [53, 13, 37, 18, 89, 6, 17, 93]
-INFO:root:capacity of route 3: 99
-INFO:root:Cost for route 3: 130.7549974241585
-INFO:root:wait for route 3: 8.780455542707116
-INFO:root:punish for route 3: 9.626974597567596
-INFO:root:----------------------------------------------------------------
-INFO:root:Route 4: [92, 61, 42, 98, 91, 59, 86, 100, 14]
-INFO:root:capacity of route 4: 131
-INFO:root:Cost for route 4: 142.03715283840128
-INFO:root:wait for route 4: 0
-INFO:root:punish for route 4: 1.3183776701933994
-INFO:root:----------------------------------------------------------------
-INFO:root:Route 5: [84, 94, 97, 87, 57, 2]
-INFO:root:capacity of route 5: 86
-INFO:root:Cost for route 5: 81.22268248064367
-INFO:root:wait for route 5: 0
-INFO:root:punish for route 5: 0
-INFO:root:----------------------------------------------------------------
-INFO:root:Total cost: 632.352565763142
-INFO:root:Total wait: 14.470609339931567
-INFO:root:Total punish: 59.26330999642664
-INFO:root:population in generations 250 is 19.36% better than the original one
-INFO:root:total_demand 919
-INFO:root:optimization for cluster 2 : [40, 21, 74, 22, 56, 4, 25, 55, 54, 75, 23, 39, 67, 72, 73, 41, 26]
-INFO:root:Route 1: [40, 21, 74, 22, 56, 4, 25, 55, 54]
-INFO:root:capacity of route 1: 97
-INFO:root:Cost for route 1: 89.87151682555424
-INFO:root:wait for route 1: 0
-INFO:root:punish for route 1: 0
-INFO:root:----------------------------------------------------------------
-INFO:root:Route 2: [75, 23, 39, 67, 72, 73, 41, 26]
-INFO:root:capacity of route 2: 159
-INFO:root:Cost for route 2: 125.33289756215842
+INFO:root:Route 2: [88, 91, 100]
+INFO:root:capacity of route 2: 172
+INFO:root:Cost for route 2: 0.023518046028120236
 INFO:root:wait for route 2: 0
 INFO:root:punish for route 2: 0
 INFO:root:----------------------------------------------------------------
-INFO:root:Total cost: 215.20441438771266
-INFO:root:Total wait: 0
-INFO:root:Total punish: 0
-INFO:root:population in generations 250 is 41.02% better than the original one
-INFO:root:total_demand 1175
-INFO:root:optimization for cluster 3 : [82, 47, 36, 46, 48, 19, 10, 90, 32, 88, 62, 11, 8, 49, 64, 63, 52, 7, 31]
-INFO:root:Route 1: [82, 47, 36, 46, 48, 19, 10, 90, 32]
-INFO:root:capacity of route 1: 144
-INFO:root:Cost for route 1: 147.06561508586032
-INFO:root:wait for route 1: 0
-INFO:root:punish for route 1: 12.63483577573976
-INFO:root:----------------------------------------------------------------
-INFO:root:Route 2: [88, 62, 11, 8, 49, 64, 63]
-INFO:root:capacity of route 2: 98
-INFO:root:Cost for route 2: 145.20590241758248
-INFO:root:wait for route 2: 0
-INFO:root:punish for route 2: 0.02100998138257637
-INFO:root:----------------------------------------------------------------
-INFO:root:Route 3: [52, 7, 31]
-INFO:root:capacity of route 3: 41
-INFO:root:Cost for route 3: 54.958297583056684
-INFO:root:wait for route 3: 5.100505063388333
+INFO:root:Route 3: [20, 21]
+INFO:root:capacity of route 3: 12
+INFO:root:Cost for route 3: 0.019259068808116918
+INFO:root:wait for route 3: 0
 INFO:root:punish for route 3: 0
 INFO:root:----------------------------------------------------------------
-INFO:root:Total cost: 347.22981508649946
-INFO:root:Total wait: 5.100505063388333
-INFO:root:Total punish: 12.655845757122336
-INFO:root:population in generations 250 is 28.27% better than the original one
-INFO:root:total_demand 1458
+INFO:root:Route 4: [87, 89]
+INFO:root:capacity of route 4: 148
+INFO:root:Cost for route 4: 0.04004905678593781
+INFO:root:wait for route 4: 0
+INFO:root:punish for route 4: 0
 INFO:root:----------------------------------------------------------------
-INFO:root:Initial Cost of all route: 2330.034085012186
-INFO:root:Cost of all route: 1709.4898573529556
-INFO:root:total route: 14
-INFO:root:final population is 26.63% better than the original one
-INFO:root:process time: 0:00:13.610640
+INFO:root:Route 5: [79, 74, 78]
+INFO:root:capacity of route 5: 153
+INFO:root:Cost for route 5: 0.024983281242389695
+INFO:root:wait for route 5: 0
+INFO:root:punish for route 5: 0
+INFO:root:----------------------------------------------------------------
+INFO:root:Route 6: [69, 75, 64]
+INFO:root:capacity of route 6: 150
+INFO:root:Cost for route 6: 0.013075897752595985
+INFO:root:wait for route 6: 0
+INFO:root:punish for route 6: 0
+INFO:root:----------------------------------------------------------------
+INFO:root:Route 7: [33, 25, 24]
+INFO:root:capacity of route 7: 194
+INFO:root:Cost for route 7: 0.014736349769301682
+INFO:root:wait for route 7: 0
+INFO:root:punish for route 7: 0
+INFO:root:----------------------------------------------------------------
+INFO:root:Route 8: [72, 56]
+INFO:root:capacity of route 8: 170
+INFO:root:Cost for route 8: 18.012214783293118
+INFO:root:wait for route 8: 0
+INFO:root:punish for route 8: 18.003123122723096
+INFO:root:----------------------------------------------------------------
+INFO:root:Route 9: [85, 82]
+INFO:root:capacity of route 9: 166
+INFO:root:Cost for route 9: 0.024656885264165748
+INFO:root:wait for route 9: 0
+INFO:root:punish for route 9: 0
+INFO:root:----------------------------------------------------------------
+INFO:root:Route 10: [35, 27, 43]
+INFO:root:capacity of route 10: 154
+INFO:root:Cost for route 10: 0.03850501006912675
+INFO:root:wait for route 10: 0
+INFO:root:punish for route 10: 0
+INFO:root:----------------------------------------------------------------
+INFO:root:Route 11: [40, 39, 38, 29]
+INFO:root:capacity of route 11: 194
+INFO:root:Cost for route 11: 0.029885424488773377
+INFO:root:wait for route 11: 0
+INFO:root:punish for route 11: 0
+INFO:root:----------------------------------------------------------------
+INFO:root:Route 12: [34, 41]
+INFO:root:capacity of route 12: 67
+INFO:root:Cost for route 12: 0.021207175508161393
+INFO:root:wait for route 12: 0
+INFO:root:punish for route 12: 0
+INFO:root:----------------------------------------------------------------
+INFO:root:Route 13: [14, 7, 9, 1, 15]
+INFO:root:capacity of route 13: 196
+INFO:root:Cost for route 13: 0.024823819475330446
+INFO:root:wait for route 13: 0
+INFO:root:punish for route 13: 0
+INFO:root:----------------------------------------------------------------
+INFO:root:Route 14: [67, 70]
+INFO:root:capacity of route 14: 107
+INFO:root:Cost for route 14: 0.0067944672371245685
+INFO:root:wait for route 14: 0
+INFO:root:punish for route 14: 0
+INFO:root:----------------------------------------------------------------
+INFO:root:Route 15: [36, 52]
+INFO:root:capacity of route 15: 98
+INFO:root:Cost for route 15: 23.01906586184482
+INFO:root:wait for route 15: 22.989028014681118
+INFO:root:punish for route 15: 0
+INFO:root:----------------------------------------------------------------
+INFO:root:Route 16: [90, 84, 95]
+INFO:root:capacity of route 16: 188
+INFO:root:Cost for route 16: 0.04694366422544052
+INFO:root:wait for route 16: 0
+INFO:root:punish for route 16: 0
+INFO:root:----------------------------------------------------------------
+INFO:root:Route 17: [49, 46, 58, 62]
+INFO:root:capacity of route 17: 127
+INFO:root:Cost for route 17: 0.04449495743448586
+INFO:root:wait for route 17: 0
+INFO:root:punish for route 17: 0
+INFO:root:----------------------------------------------------------------
+INFO:root:Route 18: [48, 55]
+INFO:root:capacity of route 18: 113
+INFO:root:Cost for route 18: 0.041444827489743756
+INFO:root:wait for route 18: 0
+INFO:root:punish for route 18: 0
+INFO:root:----------------------------------------------------------------
+INFO:root:Route 19: [68, 65, 71]
+INFO:root:capacity of route 19: 115
+INFO:root:Cost for route 19: 0.014170216630671905
+INFO:root:wait for route 19: 0
+INFO:root:punish for route 19: 0
+INFO:root:----------------------------------------------------------------
+INFO:root:Route 20: [99, 86, 93, 98]
+INFO:root:capacity of route 20: 191
+INFO:root:Cost for route 20: 0.04352090234640294
+INFO:root:wait for route 20: 0
+INFO:root:punish for route 20: 0
+INFO:root:----------------------------------------------------------------
+INFO:root:Route 21: [81, 66]
+INFO:root:capacity of route 21: 154
+INFO:root:Cost for route 21: 0.025343814778738948
+INFO:root:wait for route 21: 0
+INFO:root:punish for route 21: 0
+INFO:root:----------------------------------------------------------------
+INFO:root:Route 22: [59, 54, 47, 53, 60]
+INFO:root:capacity of route 22: 195
+INFO:root:Cost for route 22: 0.10708859170440656
+INFO:root:wait for route 22: 0
+INFO:root:punish for route 22: 0
+INFO:root:----------------------------------------------------------------
+INFO:root:Route 23: [16, 22]
+INFO:root:capacity of route 23: 150
+INFO:root:Cost for route 23: 0.00960739865551642
+INFO:root:wait for route 23: 0
+INFO:root:punish for route 23: 0
+INFO:root:----------------------------------------------------------------
+INFO:root:Route 24: [6, 10]
+INFO:root:capacity of route 24: 162
+INFO:root:Cost for route 24: 0.01324051793713141
+INFO:root:wait for route 24: 0
+INFO:root:punish for route 24: 0
+INFO:root:----------------------------------------------------------------
+INFO:root:Route 25: [57, 51, 50]
+INFO:root:capacity of route 25: 185
+INFO:root:Cost for route 25: 0.028018353023205822
+INFO:root:wait for route 25: 0
+INFO:root:punish for route 25: 0
+INFO:root:----------------------------------------------------------------
+INFO:root:Route 26: [26, 37]
+INFO:root:capacity of route 26: 80
+INFO:root:Cost for route 26: 0.017915528076591757
+INFO:root:wait for route 26: 0
+INFO:root:punish for route 26: 0
+INFO:root:----------------------------------------------------------------
+INFO:root:Route 27: [13, 3, 11, 8, 2]
+INFO:root:capacity of route 27: 190
+INFO:root:Cost for route 27: 0.03875365983553877
+INFO:root:wait for route 27: 0
+INFO:root:punish for route 27: 0
+INFO:root:----------------------------------------------------------------
+INFO:root:Route 28: [18, 19, 5]
+INFO:root:capacity of route 28: 193
+INFO:root:Cost for route 28: 0.029069097487665327
+INFO:root:wait for route 28: 0
+INFO:root:punish for route 28: 0
+INFO:root:----------------------------------------------------------------
+INFO:root:Route 29: [92, 83]
+INFO:root:capacity of route 29: 163
+INFO:root:Cost for route 29: 0.02612196861743192
+INFO:root:wait for route 29: 0
+INFO:root:punish for route 29: 0
+INFO:root:----------------------------------------------------------------
+INFO:root:Route 30: [42, 28]
+INFO:root:capacity of route 30: 163
+INFO:root:Cost for route 30: 0.01605235387949201
+INFO:root:wait for route 30: 0
+INFO:root:punish for route 30: 0
+INFO:root:----------------------------------------------------------------
+INFO:root:Total cost: 41.82166997477812
+INFO:root:Total wait: 22.989028014681118
+INFO:root:Total punish: 18.003123122723096
+INFO:root:population in generations 250 is 60.07% better than the original one
+INFO:root:total_demand 4435
+INFO:root:optimization for cluster 1 : [32, 17, 23, 76, 80, 97, 96, 94, 31, 30, 44, 45, 63, 61, 4, 12, 77]
+INFO:root:Route 1: [32]
+INFO:root:capacity of route 1: 32
+INFO:root:Cost for route 1: 0.028056903490240315
+INFO:root:wait for route 1: 0
+INFO:root:punish for route 1: 0
+INFO:root:----------------------------------------------------------------
+INFO:root:Route 2: [17, 23]
+INFO:root:capacity of route 2: 112
+INFO:root:Cost for route 2: 0.03287661636134591
+INFO:root:wait for route 2: 0
+INFO:root:punish for route 2: 0
+INFO:root:----------------------------------------------------------------
+INFO:root:Route 3: [76, 80]
+INFO:root:capacity of route 3: 170
+INFO:root:Cost for route 3: 0.0452705748218962
+INFO:root:wait for route 3: 0
+INFO:root:punish for route 3: 0
+INFO:root:----------------------------------------------------------------
+INFO:root:Route 4: [97, 96, 94]
+INFO:root:capacity of route 4: 113
+INFO:root:Cost for route 4: 0.04241150166328066
+INFO:root:wait for route 4: 0
+INFO:root:punish for route 4: 0
+INFO:root:----------------------------------------------------------------
+INFO:root:Route 5: [31, 30, 44, 45]
+INFO:root:capacity of route 5: 185
+INFO:root:Cost for route 5: 0.07115822156113591
+INFO:root:wait for route 5: 0
+INFO:root:punish for route 5: 0
+INFO:root:----------------------------------------------------------------
+INFO:root:Route 6: [63, 61]
+INFO:root:capacity of route 6: 122
+INFO:root:Cost for route 6: 0.06870554104068077
+INFO:root:wait for route 6: 0
+INFO:root:punish for route 6: 0
+INFO:root:----------------------------------------------------------------
+INFO:root:Route 7: [4, 12]
+INFO:root:capacity of route 7: 120
+INFO:root:Cost for route 7: 0.0629825357608281
+INFO:root:wait for route 7: 0
+INFO:root:punish for route 7: 0
+INFO:root:----------------------------------------------------------------
+INFO:root:Route 8: [77]
+INFO:root:capacity of route 8: 41
+INFO:root:Cost for route 8: 0.017518287663625894
+INFO:root:wait for route 8: 0
+INFO:root:punish for route 8: 0
+INFO:root:----------------------------------------------------------------
+INFO:root:Total cost: 0.3689801823630338
+INFO:root:Total wait: 0
+INFO:root:Total punish: 0
+INFO:root:population in generations 250 is 2.31% better than the original one
+INFO:root:total_demand 5330
+INFO:root:----------------------------------------------------------------
+INFO:root:Initial Cost of all route: 105.1140922167207
+INFO:root:Cost of all route: 42.19065015714115
+INFO:root:total route: 38
+INFO:root:final population is 59.86% better than the original one
+INFO:root:process time: 0:00:09.466055

@@ -8,7 +8,7 @@ from sklearn.cluster import KMeans
 file_path = 'input.txt' 
 with open(file_path, 'r') as file:
     lines = file.readlines()
-logging.basicConfig(filename='terminal_output.log', level=logging.INFO)
+logging.basicConfig(filename='terminal_output.log', level=logging.INFO, filemode='w')
 
 # Initialize the customers dictionary
 customers = {}
@@ -21,8 +21,8 @@ for line in lines[1:end_point_data]:  # Skip the header line
     list_cord = []
     data = line.strip().split()
     cust_no = cust_index
-    xcoord = int(data[1])
-    ycoord = int(data[2])
+    xcoord = float(data[1])
+    ycoord = float(data[2])
     demand = int(data[3])
     ready_time = int(data[4])
     due_date = int(data[5])
@@ -39,7 +39,7 @@ population_size = 100
 generations = 250
 mutation_rate = 0.15
 pcv = 0.8
-time_window_deviation = 50
+time_window_deviation = 10
 
 pr_best_pA = -1
 pr_best_pB = -1
@@ -47,7 +47,7 @@ fitness_list = {}
 chart_punish = {}
 chart_wait = {}
 
-num_clusters = 4
+num_clusters = 2
 kmeans = KMeans(n_clusters=num_clusters)
 clus  = kmeans.fit(cord_data)
 centroids = kmeans.cluster_centers_
@@ -144,8 +144,9 @@ def generate_population(capacity,set_customer,population_size):
                 continue
             list_filtered_route.append(filtered_customers)
         flattened_list = []
+        # print(route_list)
         [flattened_list.extend(sublist) for sublist in route_list]
-        total_value = solution_cost(split_route(flattened_list))
+        total_value = solution_cost(route_list)
         flattened_list.append(total_value['total_cost'])
         population.append(flattened_list)
     return population
@@ -205,14 +206,14 @@ def heuristic_crossover(parentA, parentB):
             child = [0] * len(parentA)
             best_pA = min(split_parentA, key= lambda x:x[-1])
             c_best_pA = best_pA[-1]
-            if pr_best_pA >= c_best_pA:
+            if pr_best_pA <= c_best_pA:
                 positions = random.sample(range(0,len(parentA)), 2)
                 positions.sort()
                 child[positions[0]:positions[1]] = parentA[positions[0]:positions[1]]
                 p2genes = [gene for gene in parentB if gene not in child]
                 child[:positions[0]] = p2genes[:positions[0]]
                 child[positions[1]:] = p2genes[positions[0]:]
-                child = heuristic_scramble_mutation(child)
+                child = mutate(child)
                 cost = solution_cost(split_route(child))
                 child.append(cost['total_cost'])
                 childs.append(child)
@@ -227,7 +228,7 @@ def heuristic_crossover(parentA, parentB):
                 p2genesA = [gene for gene in parentB if gene not in child] 
                 child[:positionA1] = p2genesA[:positionA1]
                 child[positionA2 + 1:] = p2genesA[positionA1:]
-                child = heuristic_scramble_mutation(child)
+                child = mutate(child)
                 cost = solution_cost(split_route(child))
                 child.append(cost['total_cost'])
                 childs.append(child)
@@ -236,14 +237,14 @@ def heuristic_crossover(parentA, parentB):
             child = [0] * len(parentB)
             best_pB = min(split_parentB, key= lambda x:x[-1])
             c_best_pB = best_pB[-1]
-            if pr_best_pB >= c_best_pB:
+            if pr_best_pB <= c_best_pB:
                 positions = random.sample(range(0,len(parentB)), 2)
                 positions.sort()
                 child[positions[0]:positions[1]] = parentB[positions[0]:positions[1]]
                 p2genes = [gene for gene in parentA if gene not in child]
                 child[:positions[0]] = p2genes[:positions[0]]
                 child[positions[1]:] = p2genes[positions[0]:]
-                child = heuristic_scramble_mutation(child)
+                child = mutate(child)
                 cost = solution_cost(split_route(child))
                 child.append(cost['total_cost'])
                 childs.append(child)
@@ -258,7 +259,7 @@ def heuristic_crossover(parentA, parentB):
                 p2genesB = [gene for gene in parentA if gene not in child]
                 child[:positionB1] = p2genesB[:positionB1]
                 child[positionB2 + 1:] = p2genesB[positionB1:]
-                child = heuristic_scramble_mutation(child)
+                child = mutate(child)
                 cost = solution_cost(split_route(child))
                 child.append(cost['total_cost'])
                 childs.append(child)
@@ -414,7 +415,7 @@ def run_program():
         plt.ylabel("Total cost")
         plt.title("Line chart of total cost per generation")
         plt.legend()
-        plt.savefig(f'/media/kiendt/DATA/Logistics/code/Output/output{lab}.png')
+        plt.savefig(f'D:\Logistics\code\Output\output{lab}.png')
         plt.close()
     logging.info("----------------------------------------------------------------")
     logging.info(f'Initial Cost of all route: {initial_cost}')
